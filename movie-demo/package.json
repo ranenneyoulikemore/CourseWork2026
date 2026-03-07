@@ -1,0 +1,11 @@
+{
+  "name": "movie-demo",
+  "version": "1.0.0",
+  "description": "Demo for movie-library",
+  "main": "index.js",
+  "author": "Alexandra Dryha, Alina Horban",
+  "license": "MIT",
+  "dependencies": {
+    "movie-library": "file:../movie-library"
+  }
+}

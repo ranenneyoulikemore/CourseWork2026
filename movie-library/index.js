@@ -5,8 +5,8 @@ const movies = require('./movies.json');
 function* genMovies(moviesArray) {
     let i = 0;
     while (true) {
-        yield moviesArray[i % moviesArray.length]; 
-        i++;
+   const randomIndex = Math.floor(Math.random() * moviesArray.length)
+   yield moviesArray[randomIndex];
     }
 }
 
@@ -26,3 +26,5 @@ const carouselMovies = async (interval = 1000, timeoutSec = 10) => {
 }
 
 carouselMovies(1000, 100);
+
+module.exports = { genMovies, carouselMovies, movies };
