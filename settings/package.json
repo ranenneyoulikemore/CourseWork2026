@@ -1,0 +1,15 @@
+{
+  "name": "kursova-library",
+  "version": "1.0.0",
+  "description": "Library for working with movies",
+  "main": "src/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node demo/index.js",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "author": "Oleksandra Dryha, Alina Horban",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {}
+}
