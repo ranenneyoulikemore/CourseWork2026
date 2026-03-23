@@ -1,6 +1,6 @@
 'use strict';
 
-const movies = require('./movies.json');
+const movies = require('../../develop/movies.json');
 
 function* genMovies(moviesArray) {
     let i = 0;
