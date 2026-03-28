@@ -9,19 +9,34 @@ function memoize(fn, config = {}) {
     }
 
     const type = config.policy || 'lru';
+    const timeLimit = config.expiry || 0;
 
     return function(...args) {
         const key = JSON.stringify(args);
+        const now = Date.now(); 
 
         if (cache.has(key)) {
             const cachedData = cache.get(key);
 
-            cachedData.count += 1;
-            if (type === 'lru') {
-                cache.delete(key);
-                cache.set(key, cachedData);
+            if (timeLimit > 0) {
+                if (now - cachedData.time > timeLimit) {
+                    cache.delete(key);
+                } else {
+                    cachedData.count = cachedData.count + 1;
+                    if (type === 'lru') {
+                        cache.delete(key);
+                        cache.set(key, cachedData);
+                    }
+                    return cachedData.result;
+                }
+            } else {
+                cachedData.count += 1;
+                if (type === 'lru') {
+                    cache.delete(key);
+                    cache.set(key, cachedData);
+                }
+                return cachedData.result;
             }
-            return cachedData.result;
         }
 
         const result = fn(...args);
@@ -29,8 +44,20 @@ function memoize(fn, config = {}) {
         if (cache.size >= limit) {
             let keyToDelete = null;
 
-            const firstKey = cache.keys().next().value;
-            keyToDelete = firstKey;
+            if (type === 'lfu') {
+                let min = Infinity;
+                for (const [k, val] of cache.entries()) {
+                    if (val.count < min) {
+                        min = val.count;
+                        keyToDelete = k;
+                    }
+                }
+            } else if (type === 'custom' && typeof config.customPolicy === 'function') {
+                keyToDelete = config.customPolicy(cache);
+            } else {
+                const firstKey = cache.keys().next().value;
+                keyToDelete = firstKey;
+            }
 
             if (keyToDelete !== null) {
                 cache.delete(keyToDelete);
@@ -39,7 +66,8 @@ function memoize(fn, config = {}) {
         
         cache.set(key, {
             result: result,
-            count: 1
+            count: 1,
+            time: now
         });
 
         return result;
