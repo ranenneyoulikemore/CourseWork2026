@@ -73,3 +73,5 @@ function memoize(fn, config = {}) {
         return result;
     };
 }
+
+export { memoize };

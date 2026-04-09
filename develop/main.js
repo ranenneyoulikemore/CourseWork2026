@@ -1,4 +1,8 @@
 'use strict';
+
+import { memoize } from '../src/tools/memoize.js';
+
+
 let movies = [];
 function filterMovies(searchQuery, genre){
     console.log(`Пошук фільму: "${searchQuery}", з жанром: "${genre}"...`);
