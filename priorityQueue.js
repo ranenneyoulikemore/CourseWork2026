@@ -29,4 +29,17 @@ export class BiDirectionalPriorityQueue {
     }
     return targetIndex;
   }
+
+  peek(criteria) {
+    const index = this._findIndex(criteria);
+    return index !== -1 ? this.items[index].item : null;
+  }
+
+  dequeue(criteria) {
+    const index = this._findIndex(criteria);
+    if (index !== -1) {
+      return this.items.splice(index, 1)[0].item;
+    }
+    return null;
+  }
 }
