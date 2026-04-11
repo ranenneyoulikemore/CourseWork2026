@@ -14,32 +14,43 @@ class PriorityQueue {
         });
     }
 
-    peek(type){
-        if (this.items.length === 0) return null;
-
+    _findTargetIndex(type){
+        if (this.items.length === 0) return -1;
         let targetIndx = 0;
         for ( let i = 1; i < this.items.length; i++){
-            if (type === 'highest' && this.items[i].priority > this.items[targetIndx].priority) targetIndx = i;
-            if (type === 'lowest' && this.items[i].priority < this.items[targetIndx].priority) targetIndx = i;
-            if (type === 'oldest' && this.items[i].order < this.items[targetIndx].order) targetIndx = i;
-            if (type === 'newest' && this.items[i].order > this.items[targetIndx].order) targetIndx = i;
+            const current = this.items[i];
+            const target = this.items[targetIndx];
+
+        switch(type) {
+            case 'highest':
+                if (current.priority > target.priority) targetIndx = i;
+                break;
+            case 'lowest':
+                if (current.priority < target.priority) targetIndx = i;
+                break;
+            case 'oldest':
+                if (current.order < target.order) targetIndx = i;
+                 break;
+            case 'newest':
+                if (current.order > target.order) targetIndx = i;
+                break;
         }
-        return this.items[targetIndx].item;
-    
+
+        }
+        return targetIndx;
+    }
+    peek(type){
+        if (this.items.length === 0) return null;
+        const index = this._findTargetIndex(type);
+        return this.items[index].item;
+        
     }
 
     dequeue(type) {
         if (this.items.length === 0) return null;
-
-        let targetIndx = 0;
-        for (let i = 1; i < this.items.length; i++){
-            if (type === 'highest' && this.items[i].priority > this.items[targetIndx].priority) targetIndx = i;
-            if (type === 'lowest' && this.items[i].priority < this.items[targetIndx].priority) targetIndx = i;
-            if (type === 'oldest' && this.items[i].order < this.items[targetIndx].order) targetIndx = i;
-            if (type === 'newest' && this.items[i].order > this.items[targetIndx].order) targetIndx = i;
-        }
-        const removed = this.items.splice(targetIndx, 1) [0];
-        return removed.item;
+            const index = this._findTargetIndex(type);
+            const removed = this.items.splice(index, 1)[0];
+            return removed.item;
     }
 }
 
