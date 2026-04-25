@@ -26,3 +26,14 @@ export function asyncFilterCallback(array, asyncPredicate, finalCallback) {
         });
     });
 }
+
+export async function asyncFilterPromise(array, asyncPredicate) {
+    return new Promise((resolve, reject) => {
+        Promise.all(array.map(item => asyncPredicate(item)))
+            .then(booleans => {
+                const filtered = array.filter((_, i) => booleans[i]);
+                resolve(filtered);
+            })
+            .catch(error => reject(error));
+    });
+}
