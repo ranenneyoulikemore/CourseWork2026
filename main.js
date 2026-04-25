@@ -5,6 +5,7 @@ import { asyncFindPromise, asyncFindCallback } from './asyncArray.js';
 
 let actorsData = [];
 const searchHistoryQueue = new BiDirectionalPriorityQueue();
+let currentAbortController = null;
 
 async function loadActorsData() {
     const response = await fetch('./data/actors.json');
@@ -81,12 +82,16 @@ function runCallbackDemo() {
 
 async function handleRandomActor() {
     const randomBtn = document.getElementById('randomBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
     const resultsDiv = document.getElementById('results');
 
     if (!actorsData || actorsData.length === 0) return;
 
     randomBtn.disabled = true;
     randomBtn.innerText = '⏳ Шукаю...';
+    cancelBtn.style.display = 'inline-block';
+
+    currentAbortController = new AbortController();
 
     try {
         const targetActor = actorsData[Math.floor(Math.random() * actorsData.length)];
@@ -96,16 +101,26 @@ async function handleRandomActor() {
             });
         };
 
-        const randomActor = await asyncFindPromise(actorsData, asyncPredicate);
+        const randomActor = await asyncFindPromise(
+            actorsData, 
+            asyncPredicate, 
+            { signal: currentAbortController.signal }
+        );
 
         if (randomActor) {
             renderActorCards([randomActor]);
         }
     } catch (error) {
-        resultsDiv.innerHTML = `<p>Помилка: ${error.message}</p>`;
+        if (error.name === 'AbortError') {
+            resultsDiv.innerHTML = '<p style="color: orange;">Пошук скасовано.</p>';
+        } else {
+            resultsDiv.innerHTML = `<p>Помилка: ${error.message}</p>`;
+        }
     } finally {
         randomBtn.disabled = false;
         randomBtn.innerText = '🎲 Випадковий актор';
+        cancelBtn.style.display = 'none';
+        currentAbortController = null;
     }
 }
 
@@ -114,4 +129,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     runCallbackDemo();
     document.getElementById('searchBtn').addEventListener('click', handleSearch);
     document.getElementById('randomBtn').addEventListener('click', handleRandomActor);
+    document.getElementById('cancelBtn').addEventListener('click', () => {
+        if (currentAbortController) {
+            currentAbortController.abort();
+        }
+    });
 });
