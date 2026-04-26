@@ -33,3 +33,44 @@ export async function demoPromise() {
         logState('Promise Demo', 'ERROR', err.message);
     }
 }
+
+export async function demoErrorHandling() {
+    logState('Error Demo', 'LOADING', 'Провокуємо помилку...');
+    const failingPredicate = async () => new Promise((_, reject) => setTimeout(() => reject(new Error("Втрачено з'єднання з БД!")), 500));
+
+    try {
+        await asyncFilterPromise(movies, failingPredicate);
+    } catch (err) {
+        logState('Error Demo', 'ERROR', err.message); 
+    }
+}
+
+export async function demoAbort() {
+    logState('Abort Demo', 'LOADING', 'Починаємо довгий запит...');
+    const controller = new AbortController();
+    const signal = controller.signal;
+
+    const slowPredicate = async (movie, { signal }) => {
+        return new Promise((resolve, reject) => {
+            const timer = setTimeout(() => resolve(movie.year > 2000), 2000);
+            if (signal) {
+                signal.addEventListener('abort', () => {
+                    clearTimeout(timer);
+                    reject(new Error("AbortError: Скасовано користувачем"));
+                });
+            }
+        });
+    };
+
+    setTimeout(() => {
+        logState('Abort Demo', 'CANCELLING', 'Користувач скасував запит...');
+        controller.abort(); 
+    }, 500);
+
+    try {
+        await asyncFilterPromise(movies, slowPredicate, { signal });
+        logState('Abort Demo', 'SUCCESS');
+    } catch (err) {
+        logState('Abort Demo', 'ERROR', err.message);
+    }
+}
