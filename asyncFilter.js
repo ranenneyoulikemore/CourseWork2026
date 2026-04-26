@@ -27,13 +27,29 @@ export function asyncFilterCallback(array, asyncPredicate, finalCallback) {
     });
 }
 
-export async function asyncFilterPromise(array, asyncPredicate) {
+export async function asyncFilterPromise(array, asyncPredicate, options = {}) {
+    const { signal } = options;
+
+    if (signal && signal.aborted) {
+        throw new Error("AbortError: Operation cancelled");
+    }
+
     return new Promise((resolve, reject) => {
-        Promise.all(array.map(item => asyncPredicate(item)))
+        const onAbort = () => reject(new Error("AbortError: Operation cancelled"));
+
+        if (signal) {
+            signal.addEventListener('abort', onAbort);
+        }
+
+        Promise.all(array.map(item => asyncPredicate(item, options)))
             .then(booleans => {
+                if (signal) signal.removeEventListener('abort', onAbort);
                 const filtered = array.filter((_, i) => booleans[i]);
                 resolve(filtered);
             })
-            .catch(error => reject(error));
+            .catch(error => {
+                if (signal) signal.removeEventListener('abort', onAbort);
+                reject(error);
+            });
     });
 }
