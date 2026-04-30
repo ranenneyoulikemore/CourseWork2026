@@ -5,31 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Movie Encyclopedia</title>
     <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="style.css"> 
 </head>
 <body>
     <header>
         <h1>MOVIE ENCYCLOPEDIA</h1>
-
         <nav>
             <ul>
-'''             <li><a href="#">Головна</a></li>
+            <li><a href="#">Головна</a></li>
                 <li><a href="#">Фільми</a></li>
-                <li><a href="#">Сайти</a></li>
+                <li><a href="#">Актори</a></li>
                 <li><a href="#">Про нас</a></li>
                 <li><a href="auth/login.html">Увійти</a></li>
             </ul>
         </nav>
     </header>
-
-    <section id="carousel">
-        <h2>Фільм дня</h2>
-        <div id="carouselDisplay">
-
-        </div>
-    </section>
-
     <section id="filterContent">
         <h2>Фільтр</h2>
+    <div class="filter-row">
         <input type="text" id="searchInput" placeholder="Пошук фільму...">
             <select id="genreSelect">
                 <option value="">Всі жанри</option>
@@ -43,8 +36,16 @@
                 <option value="Трилер">Трилер</option>
                 <option value="Фантастика">Фантастика</option>
                 <option value="Фентезі">Фентезі</option>
+                </div>
             </select>
 
+    </section>
+
+    <section id="carousel">
+        <h2>Фільми дня</h2>
+        <div id="carouselDisplay">
+
+        </div>
     </section>
     
     <section id="moviesList">
