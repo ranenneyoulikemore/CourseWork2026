@@ -7,6 +7,24 @@ let actorsData = [];
 const searchHistoryQueue = new BiDirectionalPriorityQueue();
 let currentAbortController = null;
 
+function persistHistory() {
+    const data = searchHistoryQueue.getItems();
+    localStorage.setItem('actorsSearchHistory', JSON.stringify(data));
+}
+
+function loadHistoryFromStorage() {
+    const saved = localStorage.getItem('actorsSearchHistory');
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            searchHistoryQueue.loadItems(parsed);
+            console.log("Історію пошуку відновлено з LocalStorage.");
+        } catch (e) {
+            console.error(e);
+        }
+    }
+}
+
 async function loadActorsData() {
     const response = await fetch('./data/actors.json');
     actorsData = await response.json();
@@ -25,10 +43,21 @@ const smartSearch = createMemoizer(findActorByName, { maxSize: 3, strategy: 'LRU
 
 function renderActorCards(actors) {
     const resultsDiv = document.getElementById('results');
+    
+    if (actors.length === 0) {
+        resultsDiv.innerHTML = '<p style="text-align:center; color:#b4a899;">У колекції нічого не знайдено 🌿</p>';
+        return;
+    }
+
     resultsDiv.innerHTML = actors.map(actor => `
-        <div style="border: 1px solid black; padding: 10px; margin: 5px;">
-            <h3>${actor.name} (Рейтинг: ${actor.rating})</h3>
-            <p>Фільми: ${actor.movies.join(', ')}</p>
+        <div class="actor-card">
+            <h3>
+                ${actor.name} 
+                <span class="rating-badge">★ ${actor.rating}</span>
+            </h3>
+            <p style="margin: 0; color: #555; font-size: 0.95rem; line-height: 1.5;">
+                <strong style="color: #3D1F12;">Фільми:</strong> ${actor.movies.join(', ')}
+            </p>
         </div>
     `).join('');
 }
@@ -39,13 +68,19 @@ function handleSearch() {
 
     const results = smartSearch(input); 
     const resultsDiv = document.getElementById('results');
+    const statusArea = document.getElementById('status-area');
+
+    statusArea.className = ""; 
+    statusArea.textContent = "";
 
     if (results.length === 0) {
-        resultsDiv.innerHTML = '<p>Актора не знайдено.</p>';
+        resultsDiv.innerHTML = '<p style="text-align:center; color:#b4a899;">Актора не знайдено.</p>';
     } else {
         results.forEach(actor => {
             searchHistoryQueue.enqueue(actor, actor.rating);
         });
+
+        persistHistory();
 
         renderActorCards(results);
 
@@ -82,22 +117,33 @@ function runCallbackDemo() {
 
 async function handleRandomActor() {
     const randomBtn = document.getElementById('randomBtn');
+    const searchBtn = document.getElementById('searchBtn'); 
     const cancelBtn = document.getElementById('cancelBtn');
     const resultsDiv = document.getElementById('results');
+    const statusArea = document.getElementById('status-area');
 
     if (!actorsData || actorsData.length === 0) return;
 
-    randomBtn.disabled = true;
-    randomBtn.innerText = '⏳ Шукаю...';
-    cancelBtn.style.display = 'inline-block';
-
-    currentAbortController = new AbortController();
-
     try {
+        randomBtn.disabled = true;
+        searchBtn.disabled = true; 
+        cancelBtn.style.display = 'inline-block';
+        statusArea.className = "text-info";
+        statusArea.textContent = "⏳ Звернення до віддаленої бази даних...";
+
+        resultsDiv.innerHTML = `
+            <div class="skeleton">
+                <div class="skeleton-line title"></div>
+                <div class="skeleton-line text"></div>
+                <div class="skeleton-line text-short"></div>
+            </div>`;
+
+        currentAbortController = new AbortController();
+
         const targetActor = actorsData[Math.floor(Math.random() * actorsData.length)];
         const asyncPredicate = (actor) => {
             return new Promise(resolve => {
-                setTimeout(() => resolve(actor.id === targetActor.id), 100);
+                setTimeout(() => resolve(actor.id === targetActor.id), 250);
             });
         };
 
@@ -108,17 +154,27 @@ async function handleRandomActor() {
         );
 
         if (randomActor) {
+            statusArea.className = "text-success";
+            statusArea.textContent = "✨ Актoра успішно підібрано!";
             renderActorCards([randomActor]);
         }
     } catch (error) {
         if (error.name === 'AbortError') {
-            resultsDiv.innerHTML = '<p style="color: orange;">Пошук скасовано.</p>';
+            statusArea.className = "text-error";
+            resultsDiv.innerHTML = `
+                <div style="text-align:center; padding: 20px; border: 2px dashed #d9534f; border-radius: 12px; background: #fdfaf5;">
+                    <p style="color:#d9534f; font-size: 1.1rem; font-weight: 600;">Пошук скасовано користувачем 🛑</p>
+                    <p style="color: #666; font-size: 0.9rem; margin-top: 5px;">Ти можеш спробувати ще раз!</p>
+                </div>`;
+            statusArea.textContent = ""; 
         } else {
-            resultsDiv.innerHTML = `<p>Помилка: ${error.message}</p>`;
+            statusArea.className = "text-error";
+            statusArea.textContent = `❌ ${error.message}`;
+            resultsDiv.innerHTML = "";
         }
     } finally {
         randomBtn.disabled = false;
-        randomBtn.innerText = '🎲 Випадковий актор';
+        searchBtn.disabled = false;
         cancelBtn.style.display = 'none';
         currentAbortController = null;
     }
@@ -126,6 +182,7 @@ async function handleRandomActor() {
 
 document.addEventListener('DOMContentLoaded', async () => {
     await loadActorsData(); 
+    loadHistoryFromStorage();
     runCallbackDemo();
     document.getElementById('searchBtn').addEventListener('click', handleSearch);
     document.getElementById('randomBtn').addEventListener('click', handleRandomActor);

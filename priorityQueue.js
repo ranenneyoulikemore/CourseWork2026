@@ -42,4 +42,16 @@ export class BiDirectionalPriorityQueue {
     }
     return null;
   }
+
+  getItems() {
+    return this.items;
+  }
+
+  loadItems(savedItems) {
+    if (!Array.isArray(savedItems)) return;
+    this.items = savedItems;
+    this.insertionCounter = savedItems.length > 0 
+      ? Math.max(...savedItems.map(i => i.order)) + 1 
+      : 0;
+  }
 }

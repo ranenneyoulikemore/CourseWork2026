@@ -2,19 +2,29 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Пошук акторів</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>КіноАрхів | Актори</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>Пошук акторів...</h1>
+        <a href="../" class="back-link">⬅ Повернутися до Бібліотеки фільмів</a>
+        
+        <h1>Актори Кіновсесвіту</h1>
+        
         <div class="search-box">
             <input type="text" id="movieInput" placeholder="Введіть ім'я актора...">
             <button id="searchBtn">Знайти</button>
             <button id="randomBtn">🎲 Випадковий актор</button>
-            <button id="cancelBtn" style="display: none; background-color: #ff4d4d; color: white;">❌ Скасувати</button>
+            <button id="cancelBtn" style="display: none;">❌ Скасувати</button>
         </div>
-        <div id="results" style="margin-top: 20px;"></div>
+
+        <div id="status-area"></div>
+
+        <div id="results"></div>
     </div>
+    
     <script type="module" src="main.js"></script>
 </body>
 </html>
