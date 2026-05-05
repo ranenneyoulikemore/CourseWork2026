@@ -1,9 +1,12 @@
 'use strict'
 import { createMemoizer } from './memoizer.js';
 import { BiDirectionalPriorityQueue } from './priorityQueue.js';
-import { asyncFindPromise, asyncFindCallback } from './asyncArray.js';
 
-let actorsData = [];
+
+const API_KEY = 'b37fda521ebe1ba79afa34f9da83cc65'; 
+const BASE_URL = 'https://api.themoviedb.org/3';
+const IMG_URL = 'https://image.tmdb.org/t/p/w200';
+
 const searchHistoryQueue = new BiDirectionalPriorityQueue();
 let currentAbortController = null;
 
@@ -16,8 +19,7 @@ function loadHistoryFromStorage() {
     const saved = localStorage.getItem('actorsSearchHistory');
     if (saved) {
         try {
-            const parsed = JSON.parse(saved);
-            searchHistoryQueue.loadItems(parsed);
+            searchHistoryQueue.loadItems(JSON.parse(saved));
             console.log("Історію пошуку відновлено з LocalStorage.");
         } catch (e) {
             console.error(e);
@@ -25,94 +27,111 @@ function loadHistoryFromStorage() {
     }
 }
 
-async function loadActorsData() {
-    const response = await fetch('./data/actors.json');
-    actorsData = await response.json();
-    console.log("База акторів завантажена.");
+async function findActorByNameAPI(searchQuery) {
+    console.log(`[API Пошук в TMDB]: "${searchQuery}"`);
+    const url = `${BASE_URL}/search/person?api_key=${API_KEY}&query=${encodeURIComponent(searchQuery)}&language=uk-UA`;
+    
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Помилка мережі при зверненні до TMDB');
+    
+    const data = await response.json();
+    const topActors = data.results.slice(0, 5);
+    
+    const detailedActors = await Promise.all(topActors.map(async (actor) => {
+        const detailUrl = `${BASE_URL}/person/${actor.id}?api_key=${API_KEY}&language=uk-UA`;
+        const detailRes = await fetch(detailUrl);
+        const detailData = detailRes.ok ? await detailRes.json() : {};
+
+        return {
+            id: actor.id,
+            name: actor.name,
+            rating: actor.popularity.toFixed(1),
+            movies: actor.known_for ? actor.known_for.map(m => m.title || m.name).filter(Boolean) : [],
+            image: actor.profile_path ? `${IMG_URL}${actor.profile_path}` : null,
+            biography: detailData.biography || "Біографія відсутня в українській базі TMDB."
+        };
+    }));
+
+    return detailedActors;
 }
 
-function findActorByName(searchQuery) {
-    console.log(`[Пошук в базі]: "${searchQuery}"`);
-    const lowerQuery = searchQuery.toLowerCase();
-    return actorsData.filter(actor => 
-        actor.name.toLowerCase().includes(lowerQuery)
-    );
-}
-
-const smartSearch = createMemoizer(findActorByName, { maxSize: 3, strategy: 'LRU' });
+const smartSearch = createMemoizer(findActorByNameAPI, { maxSize: 5, strategy: 'LRU' });
 
 function renderActorCards(actors) {
     const resultsDiv = document.getElementById('results');
     
     if (actors.length === 0) {
-        resultsDiv.innerHTML = '<p style="text-align:center; color:#b4a899;">У колекції нічого не знайдено 🌿</p>';
+        resultsDiv.innerHTML = '<p style="text-align:center; color:#b4a899;">У базі TMDB нічого не знайдено 🌿</p>';
         return;
     }
 
     resultsDiv.innerHTML = actors.map(actor => `
-        <div class="actor-card">
-            <h3>
-                ${actor.name} 
-                <span class="rating-badge">★ ${actor.rating}</span>
-            </h3>
-            <p style="margin: 0; color: #555; font-size: 0.95rem; line-height: 1.5;">
-                <strong style="color: #3D1F12;">Фільми:</strong> ${actor.movies.join(', ')}
-            </p>
+        <div class="actor-card" style="display: flex; gap: 15px; align-items: flex-start;">
+            ${actor.image 
+                ? `<img src="${actor.image}" alt="${actor.name}" class="actor-image">` 
+                : `<div class="actor-image skeleton-img" style="display:flex; align-items:center; justify-content:center; color:#b4a899; text-align:center; font-size:12px;">Немає фото</div>`
+            }
+            <div class="actor-info" style="flex: 1;">
+                <h3 style="margin: 0 0 8px 0; display: flex; align-items: center;">
+                    ${actor.name} 
+                    <span class="rating-badge">🔥 ${actor.rating}</span>
+                </h3>
+                <p style="margin: 0 0 8px 0; color: #555; font-size: 0.95rem; line-height: 1.5;">
+                    <strong style="color: #3D1F12;">Відомі ролі:</strong> 
+                    ${actor.movies.length > 0 ? actor.movies.join(', ') : 'Немає інформації'}
+                </p>
+                <p class="biography-text">
+                    <strong style="color: #3D1F12;">Біографія:</strong> ${actor.biography}
+                </p>
+            </div>
         </div>
     `).join('');
 }
 
-function handleSearch() {
+async function handleSearch() {
     const input = document.getElementById('movieInput').value.trim();
     if (!input) return;
 
-    const results = smartSearch(input); 
     const resultsDiv = document.getElementById('results');
     const statusArea = document.getElementById('status-area');
 
-    statusArea.className = ""; 
-    statusArea.textContent = "";
+    statusArea.className = "text-info"; 
+    statusArea.textContent = "⏳ Шукаємо в Голлівуді...";
+    resultsDiv.innerHTML = `
+        <div class="skeleton">
+            <div class="skeleton-line title"></div>
+            <div class="skeleton-line text"></div>
+            <div class="skeleton-line text-short"></div>
+        </div>`;
 
-    if (results.length === 0) {
-        resultsDiv.innerHTML = '<p style="text-align:center; color:#b4a899;">Актора не знайдено.</p>';
-    } else {
-        results.forEach(actor => {
-            searchHistoryQueue.enqueue(actor, actor.rating);
-        });
+    try {
+        const results = await smartSearch(input); 
+        statusArea.textContent = "";
 
-        persistHistory();
+        if (results.length === 0) {
+            resultsDiv.innerHTML = '<p style="text-align:center; color:#b4a899;">Актора не знайдено.</p>';
+        } else {
+            results.forEach(actor => searchHistoryQueue.enqueue(actor, parseFloat(actor.rating)));
+            persistHistory();
+            renderActorCards(results);
 
-        renderActorCards(results);
+            console.log("--- Статистика історії пошуку (Черга з пріоритетом) ---");
+            const highest = searchHistoryQueue.peek('highest');
+            const lowest = searchHistoryQueue.peek('lowest');
+            const oldest = searchHistoryQueue.peek('oldest');
+            const newest = searchHistoryQueue.peek('newest');
 
-        console.log("--- Статистика історії пошуку (Черга з пріоритетом) ---");
-        const highest = searchHistoryQueue.peek('highest');
-        const lowest = searchHistoryQueue.peek('lowest');
-        const oldest = searchHistoryQueue.peek('oldest');
-        const newest = searchHistoryQueue.peek('newest');
-
-        console.log("Найвищий рейтинг в історії:", highest ? `${highest.name} (${highest.rating})` : "Немає даних");
-        console.log("Найнижчий рейтинг в історії:", lowest ? `${lowest.name} (${lowest.rating})` : "Немає даних");
-        console.log("Перший запит в історії:", oldest ? oldest.name : "Немає даних");
-        console.log("Останній запит в історії:", newest ? newest.name : "Немає даних");
-        console.log("---------------------------------------------------------");
-    }
-}
-
-function runCallbackDemo() {
-    const callbackPredicate = (actor, cb) => {
-        setTimeout(() => {
-            const isMatch = actor.rating > 9.8; 
-            cb(null, isMatch);
-        }, 50);
-    };
-
-    asyncFindCallback(actorsData, callbackPredicate, (error, foundActor) => {
-        if (error) {
-            console.error(error);
-        } else if (foundActor) {
-            console.log("Callback-демо знайдено:", foundActor.name);
+            console.log("Найвищий рейтинг:", highest ? `${highest.name} (${highest.rating})` : "Немає даних");
+            console.log("Найнижчий рейтинг:", lowest ? `${lowest.name} (${lowest.rating})` : "Немає даних");
+            console.log("Перший запит в історії:", oldest ? oldest.name : "Немає даних");
+            console.log("Останній запит в історії:", newest ? newest.name : "Немає даних");
+            console.log("---------------------------------------------------------");
         }
-    });
+    } catch (error) {
+        statusArea.className = "text-error";
+        statusArea.textContent = `❌ Помилка: ${error.message}`;
+        resultsDiv.innerHTML = "";
+    }
 }
 
 async function handleRandomActor() {
@@ -122,55 +141,54 @@ async function handleRandomActor() {
     const resultsDiv = document.getElementById('results');
     const statusArea = document.getElementById('status-area');
 
-    if (!actorsData || actorsData.length === 0) return;
-
     try {
         randomBtn.disabled = true;
         searchBtn.disabled = true; 
         cancelBtn.style.display = 'inline-block';
         statusArea.className = "text-info";
-        statusArea.textContent = "⏳ Звернення до віддаленої бази даних...";
-
+        statusArea.textContent = "🎲 Вибираємо випадкову зірку...";
+        
         resultsDiv.innerHTML = `
             <div class="skeleton">
                 <div class="skeleton-line title"></div>
                 <div class="skeleton-line text"></div>
-                <div class="skeleton-line text-short"></div>
             </div>`;
 
         currentAbortController = new AbortController();
 
-        const targetActor = actorsData[Math.floor(Math.random() * actorsData.length)];
-        const asyncPredicate = (actor) => {
-            return new Promise(resolve => {
-                setTimeout(() => resolve(actor.id === targetActor.id), 250);
-            });
+        const randomPage = Math.floor(Math.random() * 50) + 1;
+        const url = `${BASE_URL}/person/popular?api_key=${API_KEY}&language=uk-UA&page=${randomPage}`;
+        
+        const response = await fetch(url, { signal: currentAbortController.signal });
+        const data = await response.json();
+        
+        const randomActorRaw = data.results[Math.floor(Math.random() * data.results.length)];
+        
+        const detailUrl = `${BASE_URL}/person/${randomActorRaw.id}?api_key=${API_KEY}&language=uk-UA`;
+        const detailRes = await fetch(detailUrl, { signal: currentAbortController.signal });
+        const detailData = detailRes.ok ? await detailRes.json() : {};
+        
+        const randomActor = {
+            id: randomActorRaw.id,
+            name: randomActorRaw.name,
+            rating: randomActorRaw.popularity.toFixed(1),
+            movies: randomActorRaw.known_for ? randomActorRaw.known_for.map(m => m.title || m.name).filter(Boolean) : [],
+            image: randomActorRaw.profile_path ? `${IMG_URL}${randomActorRaw.profile_path}` : null,
+            biography: detailData.biography || "Біографія відсутня в українській базі TMDB."
         };
 
-        const randomActor = await asyncFindPromise(
-            actorsData, 
-            asyncPredicate, 
-            { signal: currentAbortController.signal }
-        );
+        statusArea.className = "text-success";
+        statusArea.textContent = "✨ Актoра успішно підібрано!";
+        renderActorCards([randomActor]);
 
-        if (randomActor) {
-            statusArea.className = "text-success";
-            statusArea.textContent = "✨ Актoра успішно підібрано!";
-            renderActorCards([randomActor]);
-        }
     } catch (error) {
         if (error.name === 'AbortError') {
             statusArea.className = "text-error";
-            resultsDiv.innerHTML = `
-                <div style="text-align:center; padding: 20px; border: 2px dashed #d9534f; border-radius: 12px; background: #fdfaf5;">
-                    <p style="color:#d9534f; font-size: 1.1rem; font-weight: 600;">Пошук скасовано користувачем 🛑</p>
-                    <p style="color: #666; font-size: 0.9rem; margin-top: 5px;">Ти можеш спробувати ще раз!</p>
-                </div>`;
-            statusArea.textContent = ""; 
+            statusArea.textContent = "🛑 Пошук скасовано";
+            resultsDiv.innerHTML = "";
         } else {
             statusArea.className = "text-error";
             statusArea.textContent = `❌ ${error.message}`;
-            resultsDiv.innerHTML = "";
         }
     } finally {
         randomBtn.disabled = false;
@@ -180,15 +198,11 @@ async function handleRandomActor() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-    await loadActorsData(); 
+document.addEventListener('DOMContentLoaded', () => {
     loadHistoryFromStorage();
-    runCallbackDemo();
     document.getElementById('searchBtn').addEventListener('click', handleSearch);
     document.getElementById('randomBtn').addEventListener('click', handleRandomActor);
     document.getElementById('cancelBtn').addEventListener('click', () => {
-        if (currentAbortController) {
-            currentAbortController.abort();
-        }
+        if (currentAbortController) currentAbortController.abort();
     });
 });
