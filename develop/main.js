@@ -106,3 +106,19 @@ function showMovies(movies) {
 }
 
 getMovies(API_URL);
+
+let currentMovieStream = null;
+
+async function* createMovieStream(baseUrl, maxPages = 50) {
+    let currentPage = 1;
+    while (currentPage <= maxPages) {
+        const response = await fetch(`${baseUrl}&page=${currentPage}`);
+        const data = await response.json();
+        
+        if (!data.results || data.results.length === 0) {
+            break; 
+        }
+        yield data.results; 
+        currentPage++;
+    }
+}
