@@ -1,4 +1,5 @@
 'use strict'
+import { fetchActorsStream } from './asyncArray.js';
 import { createMemoizer } from './memoizer.js';
 import { BiDirectionalPriorityQueue } from './priorityQueue.js';
 
