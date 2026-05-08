@@ -1,6 +1,5 @@
-'use strict';
-
-const movies = require('../../develop/movies.json');
+"use strict";
+let currentCarouselId = 0; 
 
 function* genMovies(moviesArray) {
     let i = 0;
@@ -10,19 +9,33 @@ function* genMovies(moviesArray) {
     }
 }
 
-const carouselMovies = async (interval = 1000, timeoutSec = 10) => {
-    const iterator = genMovies(movies); 
-    const startTime = Date.now();
+const carouselMovies = async (moviesArray, interval = 5000) => {
+    currentCarouselId++; 
+    const myId = currentCarouselId; 
+    const iterator = genMovies(moviesArray); 
 
-    while (true) {
-        const elapsed = (Date.now() - startTime) / 1000;
-        if (elapsed >= timeoutSec) break;
-
+    while (myId === currentCarouselId) { 
         const nextMovie = iterator.next().value;
-        console.log(`${nextMovie.title} (${nextMovie.year}) - ${nextMovie.genre}, режисер: ${nextMovie.director}`);
-
+        updateCarouselDOM(nextMovie);
         await new Promise(r => setTimeout(r, interval));
     }
 }
 
-carouselMovies(1000, 100);
+function updateCarouselDOM(movie) {
+    const carouselDisplay = document.getElementById('carouselDisplay');
+    if (!carouselDisplay) return;
+    
+    const BACKDROP_URL = 'https://image.tmdb.org/t/p/original';
+    const backdrop = movie.backdrop_path ? BACKDROP_URL + movie.backdrop_path : '';
+    
+    carouselDisplay.style.backgroundImage = `url(${backdrop})`;
+    
+    carouselDisplay.innerHTML = `
+        <div class="carousel-info">
+            <span class="carousel-badge">Фільм дня</span>
+            <h1 class="carousel-title">${movie.title}</h1>
+            <p class="carousel-desc">${movie.overview ? movie.overview.substring(0, 200) + '...' : "Опис українською готується..."}</p>
+            <div class="carousel-rating">⭐ ${movie.vote_average.toFixed(1)}</div>
+        </div>
+    `;
+}

@@ -1,6 +1,47 @@
 'use strict';
 import { memoize } from '../src/tools/memoize.js';
 
+let currentCarouselId = 0; 
+
+function* genMovies(moviesArray) {
+    let i = 0;
+    while (true) {
+        yield moviesArray[i % moviesArray.length]; 
+        i++;
+    }
+}
+
+const carouselMovies = async (moviesArray, interval = 5000) => {
+    currentCarouselId++; 
+    const myId = currentCarouselId; 
+    const iterator = genMovies(moviesArray); 
+
+    while (myId === currentCarouselId) { 
+        const nextMovie = iterator.next().value;
+        updateCarouselDOM(nextMovie);
+        await new Promise(r => setTimeout(r, interval));
+    }
+}
+
+function updateCarouselDOM(movie) {
+    const carouselDisplay = document.getElementById('carouselDisplay');
+    if (!carouselDisplay) return;
+    
+    const BACKDROP_URL = 'https://image.tmdb.org/t/p/original';
+    const backdrop = movie.backdrop_path ? BACKDROP_URL + movie.backdrop_path : '';
+    
+    carouselDisplay.style.backgroundImage = `linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.1) 100%), url(${backdrop})`;
+    
+    carouselDisplay.innerHTML = `
+        <div class="carousel-info">
+            <span class="carousel-badge">Фільм дня</span>
+            <h1 class="carousel-title">${movie.title}</h1>
+            <p class="carousel-desc">${movie.overview ? movie.overview.substring(0, 200) + '...' : "Опис українською готується..."}</p>
+            <div class="carousel-rating">⭐ ${movie.vote_average.toFixed(1)}</div>
+        </div>
+    `;
+}
+
 const API_KEY = 'b37fda521ebe1ba79afa34f9da83cc65'; 
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMG_URL = 'https://image.tmdb.org/t/p/w500';
@@ -21,7 +62,6 @@ async function fetchFromAPI(url) {
 const settings = { size: 10, policy: 'lru' };
 const memoizedFetch = memoize(fetchFromAPI, settings);
 
-
 async function getMovies(url) {
     try {
         const data = await memoizedFetch(url);
@@ -32,6 +72,10 @@ async function getMovies(url) {
             if (/[ыэъёЫЭЪЁ]/.test(movie.overview)) return false;
             return true; 
         });
+
+        if (cleanMovies.length > 0) {
+            carouselMovies(cleanMovies.slice(0, 5), 5000);
+        }
 
         showMovies(cleanMovies);
     } catch (error) {
@@ -63,7 +107,6 @@ function showMovies(movies) {
         moviesContainer.appendChild(movieCard);
     });
 }
-
 
 if (genreSelect) {
     genreSelect.addEventListener('change', (e) => {
@@ -111,4 +154,21 @@ async function* createMovieStream(baseUrl, maxPages = 50) {
         yield data.results; 
         currentPage++;
     }
+}
+
+async function consumeNextBatch(isFirstLoad = false) {
+    if (!currentMovieStream) return;
+
+    const { value: rawMovies, done } = await currentMovieStream.next();
+
+    if (done) {
+        console.log("Всі дані з потоку оброблено");
+        return;
+    }
+    const cleanMovies = rawMovies.filter(movie => {
+        if (movie.original_language === 'ru') return false;
+        return !/[ыэъёЫЭЪЁ]/.test(movie.title + (movie.overview || ''));
+    });
+
+    showMovies(cleanMovies, isFirstLoad);
 }
