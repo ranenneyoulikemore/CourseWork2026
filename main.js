@@ -1,8 +1,8 @@
-'use strict'
+'use strict';
+
 import { fetchActorsStream } from './asyncArray.js';
 import { createMemoizer } from './memoizer.js';
 import { BiDirectionalPriorityQueue } from './priorityQueue.js';
-
 
 const API_KEY = 'b37fda521ebe1ba79afa34f9da83cc65'; 
 const BASE_URL = 'https://api.themoviedb.org/3';
@@ -10,6 +10,11 @@ const IMG_URL = 'https://image.tmdb.org/t/p/w200';
 
 const searchHistoryQueue = new BiDirectionalPriorityQueue();
 let currentAbortController = null;
+
+
+let favoriteActors = [];
+let currentDisplayedActors = []; 
+
 
 function persistHistory() {
     const data = searchHistoryQueue.getItems();
@@ -27,6 +32,40 @@ function loadHistoryFromStorage() {
         }
     }
 }
+
+function loadFavoritesFromStorage() {
+    const saved = localStorage.getItem('favoriteActors');
+    if (saved) {
+        try {
+            favoriteActors = JSON.parse(saved);
+            console.log("Улюблених акторів відновлено з LocalStorage.");
+        } catch (e) {
+            console.error(e);
+        }
+    }
+}
+
+function persistFavorites() {
+    localStorage.setItem('favoriteActors', JSON.stringify(favoriteActors));
+}
+
+window.toggleFavorite = function(actorId) {
+    const index = favoriteActors.findIndex(fav => fav.id === actorId);
+    const btn = document.getElementById(`fav-btn-${actorId}`);
+
+    if (index > -1) {
+        favoriteActors.splice(index, 1);
+        if (btn) btn.textContent = '🤍';
+    } else {
+        const actor = currentDisplayedActors.find(a => a.id === actorId);
+        if (actor) {
+            favoriteActors.push(actor);
+            if (btn) btn.textContent = '❤️';
+        }
+    }
+    persistFavorites();
+};
+
 
 async function findActorByNameAPI(searchQuery) {
     console.log(`[API Пошук в TMDB]: "${searchQuery}"`);
@@ -60,19 +99,29 @@ const smartSearch = createMemoizer(findActorByNameAPI, { maxSize: 5, strategy: '
 
 function renderActorCards(actors) {
     const resultsDiv = document.getElementById('results');
+    currentDisplayedActors = actors; 
     
     if (actors.length === 0) {
         resultsDiv.innerHTML = '<p style="text-align:center; color:#b4a899;">У базі TMDB нічого не знайдено 🌿</p>';
         return;
     }
 
-    resultsDiv.innerHTML = actors.map(actor => `
-        <div class="actor-card" style="display: flex; gap: 15px; align-items: flex-start;">
+    resultsDiv.innerHTML = actors.map(actor => {
+        const isFav = favoriteActors.some(fav => fav.id === actor.id);
+        const heartIcon = isFav ? '❤️' : '🤍';
+
+        return `
+        <div class="actor-card" style="display: flex; gap: 15px; align-items: flex-start; position: relative;">
+            <button id="fav-btn-${actor.id}" onclick="toggleFavorite(${actor.id})" 
+                style="position: absolute; right: 10px; top: 10px; background: none; border: none; font-size: 1.5rem; cursor: pointer; transition: 0.2s;" 
+                title="Додати в улюблені">
+                ${heartIcon}
+            </button>
             ${actor.image 
                 ? `<img src="${actor.image}" alt="${actor.name}" class="actor-image">` 
                 : `<div class="actor-image skeleton-img" style="display:flex; align-items:center; justify-content:center; color:#b4a899; text-align:center; font-size:12px;">Немає фото</div>`
             }
-            <div class="actor-info" style="flex: 1;">
+            <div class="actor-info" style="flex: 1; padding-right: 30px;">
                 <h3 style="margin: 0 0 8px 0; display: flex; align-items: center;">
                     ${actor.name} 
                     <span class="rating-badge">🔥 ${actor.rating}</span>
@@ -86,8 +135,28 @@ function renderActorCards(actors) {
                 </p>
             </div>
         </div>
-    `).join('');
+    `}).join('');
 }
+
+
+function showFavorites() {
+    const resultsDiv = document.getElementById('results');
+    const statusArea = document.getElementById('status-area');
+    
+    
+    document.getElementById('movieInput').value = '';
+
+    if (favoriteActors.length === 0) {
+        statusArea.textContent = "";
+        resultsDiv.innerHTML = '<p style="text-align:center; color:#b4a899;">У тебе ще немає улюблених акторів 💔</p>';
+        return;
+    }
+
+    statusArea.className = "text-success";
+    statusArea.textContent = "⭐ Твої улюблені актори:";
+    renderActorCards(favoriteActors);
+}
+
 
 async function handleSearch() {
     const input = document.getElementById('movieInput').value.trim();
@@ -116,6 +185,7 @@ async function handleSearch() {
             persistHistory();
             renderActorCards(results);
 
+            
             console.log("--- Статистика історії пошуку (Черга з пріоритетом) ---");
             const highest = searchHistoryQueue.peek('highest');
             const lowest = searchHistoryQueue.peek('lowest');
@@ -199,11 +269,44 @@ async function handleRandomActor() {
     }
 }
 
+
+function debounce(func, delay) {
+    let timeout;
+    return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+    };
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     loadHistoryFromStorage();
+    loadFavoritesFromStorage(); 
+    
+    // Прив'язка кнопок
     document.getElementById('searchBtn').addEventListener('click', handleSearch);
     document.getElementById('randomBtn').addEventListener('click', handleRandomActor);
     document.getElementById('cancelBtn').addEventListener('click', () => {
         if (currentAbortController) currentAbortController.abort();
+    });
+    
+   
+    const showFavBtn = document.getElementById('showFavBtn');
+    if (showFavBtn) {
+        showFavBtn.addEventListener('click', showFavorites);
+    }
+
+    
+    const inputField = document.getElementById('movieInput');
+    const debouncedSearch = debounce(handleSearch, 600);
+
+    inputField.addEventListener('input', () => {
+        const query = inputField.value.trim();
+        
+        if (query === '') {
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('status-area').textContent = '';
+        } else {
+            debouncedSearch();
+        }
     });
 });

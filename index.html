@@ -8,20 +8,43 @@
 </head>
 <body>
     <div class="container">
-        <h1>Зірки кіно: актори та режисери☆</h1>
+        <h1>Зірки кіно: актори та режисери</h1>
         
         <div class="search-box">
-            <input type="text" id="movieInput" placeholder="Введіть ім'я...">
-            <button id="searchBtn">Знайти</button>
-            <button id="randomBtn">🎲 Випадкова зірка</button>
-            <button id="cancelBtn" style="display: none;">❌ Скасувати</button>
-            <button id="streamBtn">🌊 Потоковий пошук</button>
+            <div class="search-row-top">
+                <input type="text" id="movieInput" placeholder="Введіть ім'я...">
+                <button id="searchBtn">Знайти</button>
+                <button id="randomBtn">Випадкова зірка</button>
+                <button id="cancelBtn" style="display: none;">❌ Скасувати</button>
+            </div>
+            
+            <div class="search-row-bottom">
+                <button id="streamBtn">🌊 Потоковий пошук</button>
+                <button id="showFavBtn">Улюблені ❤️</button>
+            </div>
         </div>
 
         <div id="status-area"></div>
         
-        <div id="results"></div>
+        <div id="results">
+            <div class="empty-state">
+                <div class="empty-icon">🍿</div>
+                <h3>Тут поки що порожньо</h3>
+                <p>Спробуй знайти улюбленого актора або випробуй удачу з випадковою зіркою!</p>
+            </div>
+        </div>
     </div>
+
+    <footer>
+        <div class="footer-content">
+            <p>© 2026 Movie Encyclopedia. Всі права захищено.</p>
+            <p>Дані надані через TMDB API. Проєкт створено в навчальних цілях.</p>
+            <div class="footer-links">
+                <span>Контакти</span> • <span>Політика конфіденційності</span> • <span>API Docs</span>
+            </div>
+        </div>
+    </footer>
+
     <script type="module" src="main.js"></script>
 </body>
 </html>
