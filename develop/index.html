@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Encyclopedia</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="style.css"> 
+</head>
+<body>
+    <header>
+        <h1>MOVIE ENCYCLOPEDIA</h1>
+        <nav>
+            <ul>
+            <li><a href="#">Головна</a></li>
+                <li><a href="#">Фільми</a></li>
+                <li><a href="#">Актори</a></li>
+                <li><a href="#">Про нас</a></li>
+                <li><a href="auth/login.html">Увійти</a></li>
+            </ul>
+        </nav>
+    </header>
+
+        <section id="carousel">
+        <h2></h2>
+<div id="carouselDisplay" style="max-width: 1400px; height: 400px; margin: 0 auto 30px auto; background-size: cover; background-position: center; border-radius: 10px; padding: 40px; display: flex; align-items: flex-end; position: relative;">
+</div>
+
+        <div id="carouselDisplay">
+
+        </div>
+    </section>
+    
+ <section id="filterContent">
+        <h2>Фільтр</h2>
+        <div class="filter-row">
+            <input type="text" id="searchInput" placeholder="Пошук фільму...">
+            <select id="genreSelect">
+                <option value="">Всі жанри</option>
+                <option value="28">Бойовик</option>
+                <option value="9648">Детективний</option>
+                <option value="99">Документальний</option>
+                <option value="18">Драма</option>
+                <option value="36">Історичний</option>
+                <option value="10749">Мелодрама</option>
+                <option value="16">Мультфільм</option>
+                <option value="53">Трилер</option>
+                <option value="878">Фантастика</option>
+                <option value="14">Фентезі</option>
+            </select>
+        </div>
+    </section>
+
+    
+    <section id="moviesList">
+        <h2></h2>
+        <div id="moviesContainer">
+
+        </div>
+    </section>
+
+    <footer>
+        <p>@ 2026 Movie Encyclopedia</p>
+    </footer>
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>
