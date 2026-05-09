@@ -62,38 +62,21 @@ async function fetchFromAPI(url) {
 const settings = { size: 10, policy: 'lru' };
 const memoizedFetch = memoize(fetchFromAPI, settings);
 
-async function getMovies(url) {
-    try {
-        const data = await memoizedFetch(url);
-        
-        const cleanMovies = data.results.filter(movie => {
-            if (movie.original_language === 'ru') return false;
-            if (/[ыэъёЫЭЪЁ]/.test(movie.title)) return false;
-            if (/[ыэъёЫЭЪЁ]/.test(movie.overview)) return false;
-            return true; 
-        });
 
-        if (cleanMovies.length > 0) {
-            carouselMovies(cleanMovies.slice(0, 5), 5000);
-        }
-
-        showMovies(cleanMovies);
-    } catch (error) {
-        console.error("Помилка API або кешу:", error);
+function showMovies(movies, isFirstLoad = false) {
+    if (isFirstLoad) {
+        moviesContainer.innerHTML = ''; 
     }
-}
 
-function showMovies(movies) {
-    moviesContainer.innerHTML = ''; 
-
-    if (movies.length === 0) {
-        moviesContainer.innerHTML = '<p style="text-align:center; width:100%; color: white;">Фільмів не знайдено.</p>';
+    if (movies.length === 0 && isFirstLoad) {
+        moviesContainer.innerHTML = '<p style="text-align:center; width:100%; color: #3D1F12;">Фільмів не знайдено.</p>';
         return;
     }
 
     movies.forEach(movie => {
         const movieCard = document.createElement('div');
         movieCard.classList.add('movie-card');
+        movieCard.style.cursor = 'pointer'; 
 
         const posterPath = movie.poster_path ? IMG_URL + movie.poster_path : 'https://via.placeholder.com/500x750?text=Немає+постера';
 
@@ -103,6 +86,10 @@ function showMovies(movies) {
             <p><strong>Рейтинг:</strong> ⭐ ${movie.vote_average.toFixed(1)} / 10</p>
             <p><strong>Дата виходу:</strong> ${movie.release_date}</p>
         `;
+
+        movieCard.addEventListener('click', () => {
+            window.location.href = `develop/movie-details/movie-details.html?id=${movie.id}`;
+        });
 
         moviesContainer.appendChild(movieCard);
     });
@@ -138,8 +125,7 @@ if (searchInput) {
     });
 }
 
-getMovies(`${DISCOVER_URL}&page=1`);
-
+//6 лаба
 let currentMovieStream = null;
 
 async function* createMovieStream(baseUrl, maxPages = 50) {
@@ -159,16 +145,42 @@ async function* createMovieStream(baseUrl, maxPages = 50) {
 async function consumeNextBatch(isFirstLoad = false) {
     if (!currentMovieStream) return;
 
-    const { value: rawMovies, done } = await currentMovieStream.next();
-
+    const { value: rawMovies, done } = await currentMovieStream.next()
     if (done) {
-        console.log("Всі дані з потоку оброблено");
+        if (loadMoreBtn) loadMoreBtn.style.display = 'none';
         return;
     }
+    
     const cleanMovies = rawMovies.filter(movie => {
         if (movie.original_language === 'ru') return false;
         return !/[ыэъёЫЭЪЁ]/.test(movie.title + (movie.overview || ''));
     });
 
+    if (isFirstLoad && cleanMovies.length > 0) {
+        carouselMovies(cleanMovies.slice(0, 5), 5000);
+    }
+
     showMovies(cleanMovies, isFirstLoad);
 }
+
+const loadMoreBtn = document.getElementById('loadMoreBtn');
+if (loadMoreBtn) {
+    loadMoreBtn.addEventListener('click', () => consumeNextBatch(false));
+}
+//кінець
+
+async function getMovies(url) {
+    try {
+        const cleanUrl = url.replace(/&page=\d+/, '');
+        
+        currentMovieStream = createMovieStream(cleanUrl);
+        
+        await consumeNextBatch(true);
+        
+        if (loadMoreBtn) loadMoreBtn.style.display = 'block';
+    } catch (error) {
+        console.error("Помилка API:", error);
+    }
+}
+
+getMovies(`${DISCOVER_URL}&page=1`);

@@ -215,3 +215,135 @@ h2 {
     font-weight: bold;
     font-size: 1.2rem;
 }
+
+
+.auth-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+    padding: 40px 20px;
+}
+
+.auth-card {
+    background: #ffffff;
+    width: 100%;
+    max-width: 400px;
+    padding: 30px 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(61, 31, 18, 0.08); 
+    border: 1px solid #eee0cd;
+    text-align: center;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.auth-form input {
+    padding: 14px 18px;
+    background: #faf7f2;
+    border: 2px solid #eee7de;
+    color: #333;
+    border-radius: 12px;
+    font-size: 16px;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.auth-form input:focus {
+    border-color: #98755B;
+    background: #ffffff;
+    box-shadow: 0 0 10px rgba(152, 117, 91, 0.2);
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #98755B;
+    margin: 20px 0;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #eee7de;
+}
+
+.divider::before { margin-right: 15px; }
+.divider::after { margin-left: 15px; }
+
+.btn-primary, .btn-secondary, .btn-google {
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    width: 100%;
+}
+
+.btn-primary {
+    background-color: #3D1F12;
+    color: #F1EADA;
+}
+.btn-primary:hover {
+    background-color: #584738;
+    box-shadow: 0 4px 10px rgba(61, 31, 18, 0.2);
+}
+
+
+.btn-secondary {
+    background-color: #98755B;
+    color: #ffffff;
+}
+.btn-secondary:hover {
+    background-color: #7a5c46;
+}
+
+.btn-google {
+    background-color: #ffffff;
+    color: #3D1F12;
+    border: 2px solid #eee7de;
+}
+.btn-google:hover {
+    border-color: #d8cec0;
+    background-color: #faf7f2;
+}
+
+#loadMoreBtn {
+    background-color: #3D1F12; 
+    color: #ffffff; 
+    border: none; 
+    border-radius: 8px; 
+    padding: 12px 30px; 
+    font-size: 16px;
+    font-weight: bold;
+    font-family: inherit; 
+    cursor: pointer; 
+    margin: 40px auto; 
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); 
+    transition: all 0.3s ease;
+}
+
+#loadMoreBtn:hover {
+    background-color: #5A2E1C;
+    transform: translateY(-3px); 
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3); 
+}
+
+#loadMoreBtn:active {
+    transform: translateY(0); 
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
