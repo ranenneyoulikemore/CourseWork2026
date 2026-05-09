@@ -1,26 +1,48 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Вхід - Movie Encyclopedia</title>
+    <link rel="stylesheet" href="../style.css">
 </head>
 <body>
+    
     <header>
-            <h1>MOVIE ENCYCLOPEDIA</h1>
-            <nav>
-                <a href="../index.html">Повернутися на головну</a>
-            </nav>
+        <h1>MOVIE ENCYCLOPEDIA</h1>
+        <nav>
+            <ul>
+                <li><a href="../index.html">На головну</a></li>
+            </ul>
+        </nav>
     </header>
 
-    <section>
-        <div>
-            <h2>Вхід в акаунт:</h2>
-                <p>Авторизуйтесь, щоб отримати доступ до створення власного списку фільмів.</p>
-                <button id="googleLoginBtn">Увійти через Google</button>
-        </div>
-    </section>
+    <main class="auth-wrapper">
+        <div class="auth-card">
+            <h2>Вхід в акаунт</h2>
 
-        <script type="module" src="login.js"></script>
+            <form id="emailAuthForm" class="auth-form">
+                <input type="email" id="emailInput" placeholder="Електронна пошта" required>
+                <input type="password" id="passwordInput" placeholder="Пароль" required>
+                <button type="submit" class="btn-primary" id="emailLoginBtn">Увійти</button>
+            </form>
+
+            <div class="divider">або</div>
+
+            <form id="phoneAuthForm" class="auth-form">
+                <input type="tel" id="phoneInput" placeholder="+380 99 123 45 67">
+                <div id="recaptcha-container"></div>
+                <button type="button" class="btn-secondary" id="phoneLoginBtn">Отримати SMS</button>
+            </form>
+
+            <div class="divider">через Google</div>
+
+            <button type="button" class="btn-google" id="googleLoginBtn">
+                Увійти через Google
+            </button>
+        </div>
+    </main>
+
+    <script type="module" src="login.js"></script>
 </body>
 </html>
