@@ -11,10 +11,8 @@ const IMG_URL = 'https://image.tmdb.org/t/p/w200';
 const searchHistoryQueue = new BiDirectionalPriorityQueue();
 let currentAbortController = null;
 
-
 let favoriteActors = [];
 let currentDisplayedActors = []; 
-
 
 function persistHistory() {
     const data = searchHistoryQueue.getItems();
@@ -65,7 +63,6 @@ window.toggleFavorite = function(actorId) {
     }
     persistFavorites();
 };
-
 
 async function findActorByNameAPI(searchQuery) {
     console.log(`[API Пошук в TMDB]: "${searchQuery}"`);
@@ -138,11 +135,9 @@ function renderActorCards(actors) {
     `}).join('');
 }
 
-
 function showFavorites() {
     const resultsDiv = document.getElementById('results');
     const statusArea = document.getElementById('status-area');
-    
     
     document.getElementById('movieInput').value = '';
 
@@ -156,7 +151,6 @@ function showFavorites() {
     statusArea.textContent = "⭐ Твої улюблені актори:";
     renderActorCards(favoriteActors);
 }
-
 
 async function handleSearch() {
     const input = document.getElementById('movieInput').value.trim();
@@ -185,7 +179,6 @@ async function handleSearch() {
             persistHistory();
             renderActorCards(results);
 
-            
             console.log("--- Статистика історії пошуку (Черга з пріоритетом) ---");
             const highest = searchHistoryQueue.peek('highest');
             const lowest = searchHistoryQueue.peek('lowest');
@@ -269,6 +262,44 @@ async function handleRandomActor() {
     }
 }
 
+async function handleStreamSearch() {
+    const input = document.getElementById('movieInput').value.trim();
+    if (!input) return;
+
+    const resultsDiv = document.getElementById('results');
+    const statusArea = document.getElementById('status-area');
+
+    statusArea.className = "text-info";
+    statusArea.textContent = "🌊 Завантажуємо акторів по черзі...";
+    resultsDiv.innerHTML = ''; 
+
+    try {
+        const stream = fetchActorsStream(BASE_URL, API_KEY, input);
+
+        for await (const actor of stream) {
+            const actorHtml = `
+                <div class="actor-card" style="display: flex; gap: 15px; align-items: flex-start; margin-top: 15px;">
+                    ${actor.image 
+                        ? `<img src="${actor.image}" alt="${actor.name}" class="actor-image">` 
+                        : `<div class="actor-image skeleton-img" style="display:flex; align-items:center; justify-content:center; color:#b4a899; text-align:center; font-size:12px;">Немає фото</div>`
+                    }
+                    <div class="actor-info" style="flex: 1;">
+                        <h3 style="margin: 0 0 8px 0;">${actor.name} <span class="rating-badge">🔥 ${actor.rating}</span></h3>
+                        <p style="margin: 0 0 8px 0; color: #555; font-size: 0.95rem;">
+                            <strong style="color: #3D1F12;">Відомі ролі:</strong> ${actor.movies.length > 0 ? actor.movies.join(', ') : 'Немає інформації'}
+                        </p>
+                        <p class="biography-text"><strong style="color: #3D1F12;">Біографія:</strong> ${actor.biography}</p>
+                    </div>
+                </div>
+            `;
+            resultsDiv.insertAdjacentHTML('beforeend', actorHtml);
+        }
+        statusArea.textContent = "";
+    } catch (error) {
+        statusArea.className = "text-error";
+        statusArea.textContent = `❌ Помилка: ${error.message}`;
+    }
+}
 
 function debounce(func, delay) {
     let timeout;
@@ -278,24 +309,52 @@ function debounce(func, delay) {
     };
 }
 
+async function loadTrendingActorsBanner() {
+    const bannerStrip = document.getElementById('actors-banner-strip');
+    const url = `${BASE_URL}/person/popular?api_key=${API_KEY}&language=uk-UA&page=1`;
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Помилка завантаження трендів');
+        
+        const data = await response.json();
+        const topActors = data.results.slice(0, 8); 
+
+        bannerStrip.innerHTML = topActors
+            .map(actor => {
+                const imgPath = actor.profile_path ? `${IMG_URL}${actor.profile_path}` : null;
+                if (!imgPath) return ''; 
+                return `<img src="${imgPath}" alt="${actor.name}" class="banner-actor-photo">`;
+            })
+            .join('');
+
+    } catch (error) {
+        console.error('Помилка банера:', error);
+        bannerStrip.style.background = '#2a1b12'; 
+    }
+}
+
+
 document.addEventListener('DOMContentLoaded', () => {
     loadHistoryFromStorage();
     loadFavoritesFromStorage(); 
     
-    // Прив'язка кнопок
+
+    loadTrendingActorsBanner();
+    
     document.getElementById('searchBtn').addEventListener('click', handleSearch);
     document.getElementById('randomBtn').addEventListener('click', handleRandomActor);
+    document.getElementById('streamBtn').addEventListener('click', handleStreamSearch); 
+    
     document.getElementById('cancelBtn').addEventListener('click', () => {
         if (currentAbortController) currentAbortController.abort();
     });
     
-   
     const showFavBtn = document.getElementById('showFavBtn');
     if (showFavBtn) {
         showFavBtn.addEventListener('click', showFavorites);
     }
 
-    
     const inputField = document.getElementById('movieInput');
     const debouncedSearch = debounce(handleSearch, 600);
 
