@@ -309,7 +309,6 @@ function debounce(func, delay) {
     };
 }
 
-
 async function loadTrendingActorsBanner() {
     const bannerStrip = document.getElementById('actors-banner-strip');
     const url = `${BASE_URL}/person/popular?api_key=${API_KEY}&language=uk-UA&page=1`;
@@ -334,7 +333,6 @@ async function loadTrendingActorsBanner() {
         bannerStrip.style.background = '#2a1b12'; 
     }
 }
-
 
 document.addEventListener('DOMContentLoaded', () => {
     loadHistoryFromStorage();
