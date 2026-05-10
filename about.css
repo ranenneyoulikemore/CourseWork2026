@@ -1,0 +1,154 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background-color: #f6f1ea;
+    color: #3D1F12;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+a {
+    text-decoration: none;
+}
+
+.site-header {
+    background-color: #3D1F12;
+    padding: 20px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.site-header h1 a {
+    color: #f6f1ea;
+    font-size: 1.6rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.site-header nav ul {
+    list-style: none;
+    display: flex;
+    gap: 25px;
+}
+
+.site-header nav a {
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: color 0.3s;
+}
+
+.site-header nav a:hover {
+    color: #dcb897;
+}
+
+.about-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+    padding: 60px 20px;
+}
+
+.about-card {
+    background: #ffffff;
+    width: 100%;
+    max-width: 700px;
+    padding: 40px 50px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(61, 31, 18, 0.08); 
+    border: 1px solid #eee0cd;
+    text-align: center;
+}
+
+.about-card h2 {
+    font-size: 2.2rem;
+    color: #3D1F12;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+
+.subtitle {
+    color: #98755B;
+    font-size: 1.1rem;
+    margin-bottom: 25px;
+}
+
+.about-card h3 {
+    color: #98755B;
+    font-size: 1.5rem;
+    margin-top: 30px;
+    margin-bottom: 20px;
+    font-weight: 800;
+}
+
+.about-text {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #584738;
+    margin-bottom: 20px;
+}
+
+.divider {
+    height: 1px;
+    background-color: #eee0cd;
+    margin: 20px 0;
+}
+
+.about-features {
+    list-style-type: none;
+    padding: 0;
+    margin: 0 auto;
+    text-align: left;
+    display: inline-block; 
+}
+
+.about-features li {
+    font-size: 1.05rem;
+    color: #3D1F12;
+    margin-bottom: 15px;
+    background: #faf7f2;
+    padding: 15px 20px;
+    border-radius: 12px;
+    border-left: 4px solid #98755B;
+}
+
+.about-footer-text {
+    font-size: 0.95rem;
+    color: #98755B;
+    font-style: italic;
+    margin-top: 20px;
+}
+
+footer {
+    background-color: #3D1F12;
+    color: #ffffff;
+    text-align: center;
+    padding: 25px 20px;
+    margin-top: auto;
+}
+
+.footer-content p {
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+}
+
+.footer-links {
+    margin-top: 15px;
+    font-size: 0.85rem;
+    color: #dcb897;
+}
+
+.footer-links span {
+    cursor: pointer;
+    margin: 0 5px;
+}
