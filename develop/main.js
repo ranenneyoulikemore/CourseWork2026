@@ -88,7 +88,7 @@ function showMovies(movies, isFirstLoad = false) {
         `;
 
         movieCard.addEventListener('click', () => {
-            window.location.href = `develop/movie-details/movie-details.html?id=${movie.id}`;
+            window.location.href = `movie-details.html?id=${movie.id}`;
         });
 
         moviesContainer.appendChild(movieCard);
@@ -131,8 +131,8 @@ let currentMovieStream = null;
 async function* createMovieStream(baseUrl, maxPages = 50) {
     let currentPage = 1;
     while (currentPage <= maxPages) {
-        const response = await fetch(`${baseUrl}&page=${currentPage}`);
-        const data = await response.json();
+        const fullUrl = `${baseUrl}&page=${currentPage}`;
+        const data = await memoizedFetch(fullUrl); 
         
         if (!data.results || data.results.length === 0) {
             break; 
