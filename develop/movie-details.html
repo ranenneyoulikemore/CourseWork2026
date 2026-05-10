@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Деталі фільму - Movie Encyclopedia</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #F3EFE6; 
+            color: #3D1F12; 
+        }
+        header {
+            background-color: #3D1F12; 
+            color: #FFFFFF;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h2 {
+            margin: 0;
+            font-size: 24px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .home-link {
+            color: #FFFFFF;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .home-link:hover {
+            text-decoration: underline;
+        }
+        #movieContainer {
+            min-height: 70vh; 
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h2>MOVIE ENCYCLOPEDIA</h2>
+        <a href="index.html" class="home-link">На головну</a>
+    </header>
+
+    <div id="movieContainer">
+        <h3 style="text-align: center; margin-top: 50px;">Завантаження...</h3>
+    </div>
+
+    <script src="movie-details.js"></script>
+
+</body>
+</html>

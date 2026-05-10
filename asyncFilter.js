@@ -1,4 +1,4 @@
-'use strict';
+/*'use strict';
 
 export function asyncFilterCallback(array, asyncPredicate, finalCallback) {
     if (array.length === 0) return finalCallback(null, []);
