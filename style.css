@@ -15,19 +15,19 @@ body {
     position: relative;
 }
 
-/* --- ВИТОНЧЕНИЙ ПОВНОШИРИННИЙ БАНЕР --- */
+
 #hero-banner {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    height: 320px; /* Зменшили висоту для кращих пропорцій */
+    height: 320px; 
     background: #1a100a;
     overflow: hidden;
     z-index: 1;
 }
 
-/* М'якший градієнт */
+
 #hero-banner::after {
     content: '';
     position: absolute;
@@ -51,7 +51,7 @@ body {
     min-width: 0;
     height: 100%;
     object-fit: cover;
-    object-position: center 15%; /* Фокус на обличчях */
+    object-position: center 15%; 
     filter: grayscale(20%) brightness(0.65);
     transition: filter 0.5s ease;
 }
@@ -62,7 +62,7 @@ body {
 
 #hero-banner-content {
     position: absolute;
-    top: 60px; /* Підняли текст вище, щоб не ховався за блоком пошуку */
+    top: 60px; 
     left: 0;
     width: 100%;
     text-align: center;
@@ -73,7 +73,7 @@ body {
 
 #hero-banner-content h1 {
     margin: 0;
-    font-size: 2.6rem; /* Зробили трохи меншим і акуратнішим */
+    font-size: 2.6rem; 
     font-weight: 800;
     letter-spacing: -0.5px;
     color: #ffffff;
@@ -87,23 +87,23 @@ body {
     text-shadow: 0 2px 6px rgba(0,0,0,0.7);
 }
 
-/* --- ГОЛОВНИЙ КОНТЕЙНЕР (ПОШУК) --- */
+
 .container {
     position: relative;
     z-index: 10;
-    margin-top: 220px; /* Оптимальний відступ (наплив на банер всього 100px) */
+    margin-top: 220px; 
     margin-bottom: 40px;
     width: 92%;
-    max-width: 850px; /* Трохи звузили для преміального вигляду */
+    max-width: 850px; 
     background: #ffffff;
-    padding: 35px 40px; /* Додали "повітря" всередині */
-    border-radius: 20px; /* М'якші кути */
-    box-shadow: 0 12px 35px rgba(61, 31, 18, 0.12), 0 4px 10px rgba(0,0,0,0.05); /* Глибока, але ніжна тінь */
+    padding: 35px 40px; 
+    border-radius: 20px; 
+    box-shadow: 0 12px 35px rgba(61, 31, 18, 0.12), 0 4px 10px rgba(0,0,0,0.05); 
     box-sizing: border-box;
     border: 1px solid rgba(224, 214, 200, 0.5);
 }
 
-/* --- БЛОК ПОШУКУ --- */
+
 .search-box {
     display: flex;
     flex-direction: column;
@@ -168,7 +168,7 @@ button {
 
 #cancelBtn { background-color: #d9534f; color: white; }
 
-/* --- СІТКА РЕЗУЛЬТАТІВ --- */
+
 #results {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -202,7 +202,7 @@ button {
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
-/* --- ПОПКОРН (Empty State) --- */
+
 .empty-state {
     text-align: center;
     padding: 70px 20px;
@@ -229,7 +229,7 @@ button {
     50% { transform: translateY(-10px); }
 }
 
-/* --- ФУТЕР --- */
+
 footer {
     width: 100%;
     max-width: 850px;
@@ -281,4 +281,52 @@ footer {
     .container { margin-top: 180px; padding: 25px 20px; }
     #hero-banner-content h1 { font-size: 2rem; }
     input { min-width: 100%; }
+}
+
+.site-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 50; 
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 4%;
+    box-sizing: border-box;
+    background: linear-gradient(to bottom, rgba(26, 16, 10, 0.8) 0%, transparent 100%);
+}
+
+.site-header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+.site-header h1 a {
+    color: #ffffff;
+    text-decoration: none;
+    letter-spacing: 1px;
+}
+
+.site-header nav ul {
+    list-style: none;
+    display: flex;
+    gap: 25px;
+    margin: 0;
+    padding: 0;
+}
+
+.site-header nav ul li a {
+    color: #e0d6c8;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 1.05rem;
+    transition: color 0.3s ease;
+}
+
+.site-header nav ul li a:hover,
+.site-header nav ul li a.active {
+    color: #ffffff;
+    text-shadow: 0 0 10px rgba(255,255,255,0.4);
 }

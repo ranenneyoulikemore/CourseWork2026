@@ -309,7 +309,6 @@ function debounce(func, delay) {
     };
 }
 
-// --- НОВА ФУНКЦІЯ ДЛЯ ЗАВАНТАЖЕННЯ ФОТО В БАНЕР ---
 async function loadTrendingActorsBanner() {
     const bannerStrip = document.getElementById('actors-banner-strip');
     const url = `${BASE_URL}/person/popular?api_key=${API_KEY}&language=uk-UA&page=1`;
@@ -319,7 +318,7 @@ async function loadTrendingActorsBanner() {
         if (!response.ok) throw new Error('Помилка завантаження трендів');
         
         const data = await response.json();
-        const topActors = data.results.slice(0, 8); // Беремо більше акторів для стрічки
+        const topActors = data.results.slice(0, 8); 
 
         bannerStrip.innerHTML = topActors
             .map(actor => {
@@ -334,13 +333,13 @@ async function loadTrendingActorsBanner() {
         bannerStrip.style.background = '#2a1b12'; 
     }
 }
-// ---------------------------------------------------
+
 
 document.addEventListener('DOMContentLoaded', () => {
     loadHistoryFromStorage();
     loadFavoritesFromStorage(); 
     
-    // Завантажуємо трендових акторів у банер
+
     loadTrendingActorsBanner();
     
     document.getElementById('searchBtn').addEventListener('click', handleSearch);
