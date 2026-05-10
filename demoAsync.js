@@ -1,4 +1,4 @@
-'use strict';
+/*'use strict';
 
 import { asyncFilterCallback, asyncFilterPromise } from './asyncFilter.js';
 

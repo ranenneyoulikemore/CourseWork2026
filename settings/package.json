@@ -1,12 +1,11 @@
 {
-  "name": "kursova-library",
+  "name": "movie-encyclopedia-kursova",
   "version": "1.0.0",
-  "description": "Library for working with movies",
-  "main": "src/index.js",
-  "type": "commonjs",
+  "description": "Курсовий проєкт: Вебзастосунок 'Енциклопедія фільмів' з інтеграцією TMDB API та Firebase",
+  "main": "develop/index.html",
+  "type": "module",
   "scripts": {
-    "start": "node demo/index.js",
-    "test": "echo \"No tests yet\" && exit 0"
+    "start": "echo \"Будь ласка, запустіть файл develop/index.html за допомогою Live Server у VS Code\" && exit 0"
   },
   "author": "Oleksandra Dryha, Alina Horban",
   "license": "MIT",
