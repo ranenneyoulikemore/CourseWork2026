@@ -1,5 +1,7 @@
 'use strict';
+
 import { memoize } from '../src/tools/memoize.js';
+import { PriorityQueue } from '../src/tools/priorityQueue.js';
 
 let currentCarouselId = 0; 
 
@@ -30,7 +32,7 @@ function updateCarouselDOM(movie) {
     const BACKDROP_URL = 'https://image.tmdb.org/t/p/original';
     const backdrop = movie.backdrop_path ? BACKDROP_URL + movie.backdrop_path : '';
     
-    carouselDisplay.style.backgroundImage = `linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.1) 100%), url(${backdrop})`;
+    carouselDisplay.style.backgroundImage = `linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0) 60%), url(${backdrop})`;
     
     carouselDisplay.innerHTML = `
         <div class="carousel-info">
@@ -54,7 +56,6 @@ const genreSelect = document.getElementById('genreSelect');
 const moviesContainer = document.getElementById('moviesContainer');
 
 async function fetchFromAPI(url) {
-    console.log("Йдемо в інтернет за:", url); 
     const response = await fetch(url);
     return await response.json();
 }
@@ -62,6 +63,57 @@ async function fetchFromAPI(url) {
 const settings = { size: 10, policy: 'lru' };
 const memoizedFetch = memoize(fetchFromAPI, settings);
 
+const offlineQueue = new PriorityQueue();
+
+function saveToFavorites(movieData) {
+    let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+    if (!favorites.find(fav => fav.id === movieData.id)) {
+        favorites.push(movieData);
+        localStorage.setItem('favorites', JSON.stringify(favorites));
+    }
+}
+
+function syncOfflineActions() {
+    if (!navigator.onLine) return;
+    
+    let syncedCount = 0;
+    while (!offlineQueue.isEmpty()) {
+        const action = offlineQueue.dequeue('oldest');
+        if (action.type === 'ADD_FAVORITE') {
+            saveToFavorites(action.data);
+            syncedCount++;
+        }
+    }
+    
+    if (syncedCount > 0) {
+        alert(`З'єднання відновлено! ${syncedCount} фільм(ів) успішно додано до улюблених.`);
+        renderFavorites(); 
+    }
+}
+
+window.addEventListener('online', syncOfflineActions);
+
+window.addToFavoritesFromHome = function(event, id, title, posterPath) {
+    event.stopPropagation(); 
+    const user = localStorage.getItem('movieUser');
+
+    if (!user) {
+        const confirmLogin = confirm("Тільки авторизовані користувачі можуть додавати фільми. Перейдіть на сторінку входу.");
+        if (confirmLogin) window.location.href = 'pages/auth/login.html';
+        return;
+    }
+
+    const movieData = { id: Number(id), title, posterPath };
+
+    if (navigator.onLine) {
+        saveToFavorites(movieData);
+        alert(`Фільм "${title}" збережено!`);
+        renderFavorites();
+    } else {
+        offlineQueue.enqueue({ type: 'ADD_FAVORITE', data: movieData }, 1);
+        alert(`Немає мережі. "${title}" додано до черги і збережеться автоматично.`);
+    }
+};
 
 function showMovies(movies, isFirstLoad = false) {
     if (isFirstLoad) {
@@ -77,6 +129,8 @@ function showMovies(movies, isFirstLoad = false) {
         const movieCard = document.createElement('div');
         movieCard.classList.add('movie-card');
         movieCard.style.cursor = 'pointer'; 
+        movieCard.style.display = 'flex';
+        movieCard.style.flexDirection = 'column';
 
         const posterPath = movie.poster_path ? IMG_URL + movie.poster_path : 'https://via.placeholder.com/500x750?text=Немає+постера';
 
@@ -85,10 +139,21 @@ function showMovies(movies, isFirstLoad = false) {
             <h3>${movie.title}</h3>
             <p><strong>Рейтинг:</strong> ⭐ ${movie.vote_average.toFixed(1)} / 10</p>
             <p><strong>Дата виходу:</strong> ${movie.release_date}</p>
+            
+            <div style="margin-top: auto; padding-top: 15px; display: flex; justify-content: center;">
+                <button 
+                    onclick="addToFavoritesFromHome(event, ${movie.id}, '${movie.title.replace(/'/g, "\\'")}', '${posterPath}')" 
+                    style="background: white; border: 1px solid #3D1F12; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 18px; display: flex; justify-content: center; align-items: center; transition: 0.2s;"
+                    title="Додати в улюблені"
+                    onmouseover="this.style.background='#f0f0f0'"
+                    onmouseout="this.style.background='white'">
+                    ❤️
+                </button>
+            </div>
         `;
 
         movieCard.addEventListener('click', () => {
-            window.location.href = `movie-details.html?id=${movie.id}`;
+            window.location.href = `movie-details.html?id=${movie.id}`; 
         });
 
         moviesContainer.appendChild(movieCard);
@@ -125,7 +190,6 @@ if (searchInput) {
     });
 }
 
-//6 лаба
 let currentMovieStream = null;
 
 async function* createMovieStream(baseUrl, maxPages = 50) {
@@ -167,7 +231,6 @@ const loadMoreBtn = document.getElementById('loadMoreBtn');
 if (loadMoreBtn) {
     loadMoreBtn.addEventListener('click', () => consumeNextBatch(false));
 }
-//кінець
 
 async function getMovies(url) {
     try {
@@ -184,3 +247,42 @@ async function getMovies(url) {
 }
 
 getMovies(`${DISCOVER_URL}&page=1`);
+
+const showFavoritesBtn = document.getElementById('showFavoritesBtn');
+const favoritesList = document.getElementById('favoritesList');
+
+favoritesList.style.display = 'none';
+
+showFavoritesBtn.addEventListener('click', () => {
+    const isHidden = favoritesList.style.display === 'none';
+    favoritesList.style.display = isHidden ? 'flex' : 'none';
+
+    if (isHidden) {
+        renderFavorites();
+    }
+});
+
+function renderFavorites() {
+    let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+
+    if (favorites.length === 0) {
+        favoritesList.innerHTML = '<p style="color: #3D1F12;">Ваш список улюблених порожній. Додайте щось цікаве!</p>';
+        return;
+    }
+
+    favoritesList.innerHTML = favorites.map(movie => `
+        <div style="width: 150px; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center;">
+            <img src="${movie.posterPath}" alt="${movie.title}" style="width: 100%; border-radius: 8px; margin-bottom: 10px;">
+            <h4 style="font-size: 14px; margin-bottom: 10px; color: #3D1F12;">${movie.title}</h4>
+            <a href="movie-details.html?id=${movie.id}" style="display: block; background: #3D1F12; color: white; text-decoration: none; padding: 5px; border-radius: 5px; font-size: 12px;">Детальніше</a>
+            <button onclick="removeFavorite(${movie.id})" style="margin-top: 5px; background: #d32f2f; color: white; border: none; padding: 5px; border-radius: 5px; font-size: 12px; cursor: pointer; width: 100%;">Видалити</button>
+        </div>
+    `).join('');
+}
+
+window.removeFavorite = function(id) {
+    let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+    favorites = favorites.filter(movie => movie.id !== id);
+    localStorage.setItem('favorites', JSON.stringify(favorites));
+    renderFavorites(); 
+};

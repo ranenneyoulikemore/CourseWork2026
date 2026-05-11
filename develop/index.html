@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,24 +8,28 @@
     <link rel="stylesheet" href="style.css"> 
 </head>
 <body>
-    <header>
+    <header class="hero-header">
         <h1>MOVIE ENCYCLOPEDIA</h1>
-            <nav>
-                <ul>
-                    <li><a href="../index.html">Актори</a></li>
-                    <li><a href="../about.html">Про нас</a></li>
-                    <li><a href="auth/login.html">Увійти</a></li>
-                    </ul>
-            </nav>
+        <nav>
+            <ul>
+                <li><a href="../index.html">Актори</a></li>
+                <li><a href="../about.html">Про нас</a></li>
+                <li><a href="auth/login.html">Увійти</a></li>
+            </ul>
+        </nav>
     </header>
 
-        <section id="carousel">
-        <h2></h2>
-<div id="carouselDisplay" style="max-width: 1400px; height: 400px; margin: 0 auto 30px auto; background-size: cover; background-position: center; border-radius: 10px; padding: 40px; display: flex; align-items: flex-end; position: relative;">
-</div>
+    <section id="carousel">
+        <div id="carouselDisplay"></div>
     </section>
     
- <section id="filterContent">
+    <button id="showFavoritesBtn" style="background: #3D1F12; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin: 20px;">
+    ❤️ Мої улюблені
+</button>
+
+<div id="favoritesList" style="display: none; padding: 20px; background: #F3EFE6; border-radius: 10px; margin: 0 20px 30px 20px; display: flex; gap: 20px; flex-wrap: wrap;">
+</div>
+    <section id="filterContent">
         <h2>Фільтр</h2>
         <div class="filter-row">
             <input type="text" id="searchInput" placeholder="Пошук фільму...">
@@ -45,20 +49,17 @@
         </div>
     </section>
 
-    
     <section id="moviesList">
         <h2></h2>
-        <div id="moviesContainer">
-        </div>
-            <button id="loadMoreBtn" style="display: none;">Завантажити ще</button>
+        <div id="moviesContainer"></div>
+        <button id="loadMoreBtn" style="display: none;">Завантажити ще</button>
     </section>
 
     <footer>
         <div class="footer-content">
             <p>© 2026 Movie Encyclopedia. Всі права захищено.</p>
             <p>Дані надані через TMDB API. Проєкт створено в навчальних цілях.</p>
-            <div class="footer-links">
-            </div>
+            <div class="footer-links"></div>
         </div>
     </footer>
 
