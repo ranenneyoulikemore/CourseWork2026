@@ -1,9 +1,33 @@
+import { PriorityQueue } from '../src/tools/priorityQueue.js';
+
 const API_KEY = 'b37fda521ebe1ba79afa34f9da83cc65';
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMG_URL = 'https://image.tmdb.org/t/p/w500';
 
+const offlineQueue = new PriorityQueue();
+
 const urlParams = new URLSearchParams(window.location.search);
 const movieId = urlParams.get('id');
+
+function saveToFavorites(movieData) {
+    let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+    if (!favorites.find(fav => fav.id === movieData.id)) {
+        favorites.push(movieData);
+        localStorage.setItem('favorites', JSON.stringify(favorites));
+    }
+}
+
+function syncOfflineActions() {
+    if (!navigator.onLine) return;
+    while (!offlineQueue.isEmpty()) {
+        const action = offlineQueue.dequeue('oldest');
+        if (action.type === 'ADD_FAVORITE') {
+            saveToFavorites(action.data);
+        }
+    }
+}
+
+window.addEventListener('online', syncOfflineActions);
 
 async function getMovieDetails() {
     if (!movieId) {
@@ -56,14 +80,36 @@ async function getMovieDetails() {
         `;
 
         const favBtn = document.getElementById('favoriteBtn');
+
         favBtn.addEventListener('click', () => {
-            alert(`Фільм "${movie.title}" успішно додано до вашого списку улюблених!\n(Доступно у вашому профілі)`);
-            favBtn.innerHTML = '✔️ В улюблених';
-            favBtn.style.background = '#2e7d32'; 
+            const user = localStorage.getItem('movieUser');
+
+            if (!user) {
+                const confirmLogin = confirm("Тільки авторизовані користувачі можуть додавати фільми в улюблені. Бажаєте перейти на сторінку входу?");
+                if (confirmLogin) window.location.href = '../auth/login.html'; 
+                return;
+            }
+
+            const movieData = {
+                id: movie.id,
+                title: movie.title,
+                posterPath: posterPath
+            };
+
+            if (navigator.onLine) {
+                saveToFavorites(movieData);
+                alert(`Фільм "${movie.title}" додано!`);
+                favBtn.innerHTML = '✔️ В улюблених';
+                favBtn.style.background = '#2e7d32';
+            } else {
+                offlineQueue.enqueue({ type: 'ADD_FAVORITE', data: movieData }, 1);
+                alert("Ви офлайн. Фільм додано до черги і буде збережений автоматично, коли з'явиться інтернет.");
+                favBtn.innerHTML = '⏳ В черзі (офлайн)';
+                favBtn.style.background = '#ffa000';
+            }
         });
 
     } catch (error) {
-        console.error("Помилка завантаження фільму:", error);
         document.getElementById('movieContainer').innerHTML = '<h2 style="text-align:center; margin-top:50px; color: red;">Помилка завантаження даних.</h2>';
     }
 }

@@ -19,20 +19,16 @@
 
     <main class="auth-wrapper">
         <div class="auth-card">
-            <h2>Вхід в акаунт</h2>
+            <div class="auth-header-enhanced">
+                <h2>Вхід або Реєстрація</h2>
+                <p>Твій світ кіно починається тут</p>
+            </div>
 
             <form id="emailAuthForm" class="auth-form">
                 <input type="email" id="emailInput" placeholder="Електронна пошта" required>
                 <input type="password" id="passwordInput" placeholder="Пароль" required>
                 <button type="submit" class="btn-primary" id="emailLoginBtn">Увійти</button>
-            </form>
-
-            <div class="divider">або</div>
-
-            <form id="phoneAuthForm" class="auth-form">
-                <input type="tel" id="phoneInput" placeholder="+380 99 123 45 67">
-                <div id="recaptcha-container"></div>
-                <button type="button" class="btn-secondary" id="phoneLoginBtn">Отримати SMS</button>
+                <button type="button" class="btn-secondary" id="emailRegisterBtn">Зареєструватися</button>
             </form>
 
             <div class="divider">через Google</div>
