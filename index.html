@@ -7,18 +7,29 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <header class="site-header">
+        <h1><a href="index.html">MOVIE ENCYCLOPEDIA</a></h1>
+        <nav>
+            <ul>
+                <li><a href="develop/index.html">Головна</a></li>
+                <li><a href="about.html">Про нас</a></li>
+                <li><a href="develop/auth/login.html">Увійти</a></li>
+            </ul>
+        </nav>
+    </header>
+    
     <div id="hero-banner">
-        <div id="actors-banner-strip">
-            </div>
+        <div id="actors-banner-strip"></div>
         <div id="hero-banner-content">
             <h1>Зірки кіно: актори та режисери</h1>
             <p>Твоя персональна енциклопедія кінозірок</p>
         </div>
     </div>
+    
     <div class="container">
         <div class="search-box">
             <div class="search-row-top">
-                <input type="text" id="movieInput" placeholder="Введіть ім'я...">
+                <input type="text" id="movieInput" placeholder="Введіть ім'я (наприклад, Кіану Рівз)...">
                 <button id="searchBtn">Знайти</button>
                 <button id="randomBtn">Випадкова зірка</button>
                 <button id="cancelBtn" style="display: none;">❌ Скасувати</button>
@@ -41,12 +52,28 @@
         </div>
     </div>
 
+    <div id="history-section" class="container" style="margin-top: 20px;">
+        <h2 style="text-align: center; color: #5a3b25; margin-bottom: 20px;">Аналітика історії</h2>
+        
+        <div class="history-layout">
+            <div class="history-controls">
+                <button id="btn-hist-highest" class="hist-btn">⭐ Найрейтинговіший</button>
+                <button id="btn-hist-lowest" class="hist-btn">⭐ Менш відомий</button>
+                <button id="btn-hist-oldest" class="hist-btn">⭐ Найперший запит</button>
+                <button id="btn-hist-newest" class="hist-btn">⭐ Останній запит</button>
+            </div>
+
+            <div id="history-result">
+                <p style="text-align:center; color:#b4a899;">Натисни на одну з кнопок, щоб витягнути дані з черги</p>
+            </div>
+        </div>
+    </div>
+
     <footer>
         <div class="footer-content">
             <p>© 2026 Movie Encyclopedia. Всі права захищено.</p>
             <p>Дані надані через TMDB API. Проєкт створено в навчальних цілях.</p>
-            <div class="footer-links">
-            </div>
+            <div class="footer-links"></div>
         </div>
     </footer>
 
