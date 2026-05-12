@@ -14,6 +14,13 @@ let currentAbortController = null;
 let favoriteActors = [];
 let currentDisplayedActors = []; 
 
+function getBadgeClass(rating) {
+    const r = parseFloat(rating);
+    if (r >= 20) return 'badge-high';
+    if (r >= 5) return 'badge-mid';
+    return 'badge-low';
+}
+
 function persistHistory() {
     const data = searchHistoryQueue.getItems();
     localStorage.setItem('actorsSearchHistory', JSON.stringify(data));
@@ -121,7 +128,7 @@ function renderActorCards(actors) {
             <div class="actor-info" style="flex: 1; padding-right: 30px;">
                 <h3 style="margin: 0 0 8px 0; display: flex; align-items: center;">
                     ${actor.name} 
-                    <span class="rating-badge">🔥 ${actor.rating}</span>
+                    <span class="rating-badge ${getBadgeClass(actor.rating)}">🔥 ${actor.rating}</span>
                 </h3>
                 <p style="margin: 0 0 8px 0; color: #555; font-size: 0.95rem; line-height: 1.5;">
                     <strong style="color: #3D1F12;">Відомі ролі:</strong> 
@@ -132,7 +139,7 @@ function renderActorCards(actors) {
                 </p>
             </div>
         </div>
-    `}).join('');
+    `;}).join('');
 }
 
 function showFavorites() {
@@ -162,7 +169,7 @@ async function handleSearch() {
     statusArea.className = "text-info"; 
     statusArea.textContent = "⏳ Шукаємо в Голлівуді...";
     resultsDiv.innerHTML = `
-        <div class="skeleton">
+        <div class="skeleton-card">
             <div class="skeleton-line title"></div>
             <div class="skeleton-line text"></div>
             <div class="skeleton-line text-short"></div>
@@ -179,7 +186,7 @@ async function handleSearch() {
             persistHistory();
             renderActorCards(results);
 
-            console.log("--- Статистика історії пошуку (Черга з пріоритетом) ---");
+            console.log("Статистика історії пошуку (Черга з пріоритетом)");
             const highest = searchHistoryQueue.peek('highest');
             const lowest = searchHistoryQueue.peek('lowest');
             const oldest = searchHistoryQueue.peek('oldest');
@@ -189,7 +196,6 @@ async function handleSearch() {
             console.log("Найнижчий рейтинг:", lowest ? `${lowest.name} (${lowest.rating})` : "Немає даних");
             console.log("Перший запит в історії:", oldest ? oldest.name : "Немає даних");
             console.log("Останній запит в історії:", newest ? newest.name : "Немає даних");
-            console.log("---------------------------------------------------------");
         }
     } catch (error) {
         statusArea.className = "text-error";
@@ -213,7 +219,7 @@ async function handleRandomActor() {
         statusArea.textContent = "🎲 Вибираємо випадкову зірку...";
         
         resultsDiv.innerHTML = `
-            <div class="skeleton">
+            <div class="skeleton-card">
                 <div class="skeleton-line title"></div>
                 <div class="skeleton-line text"></div>
             </div>`;
@@ -284,7 +290,7 @@ async function handleStreamSearch() {
                         : `<div class="actor-image skeleton-img" style="display:flex; align-items:center; justify-content:center; color:#b4a899; text-align:center; font-size:12px;">Немає фото</div>`
                     }
                     <div class="actor-info" style="flex: 1;">
-                        <h3 style="margin: 0 0 8px 0;">${actor.name} <span class="rating-badge">🔥 ${actor.rating}</span></h3>
+                        <h3 style="margin: 0 0 8px 0;">${actor.name} <span class="rating-badge ${getBadgeClass(actor.rating)}">🔥 ${actor.rating}</span></h3>
                         <p style="margin: 0 0 8px 0; color: #555; font-size: 0.95rem;">
                             <strong style="color: #3D1F12;">Відомі ролі:</strong> ${actor.movies.length > 0 ? actor.movies.join(', ') : 'Немає інформації'}
                         </p>
@@ -330,16 +336,56 @@ async function loadTrendingActorsBanner() {
 
     } catch (error) {
         console.error('Помилка банера:', error);
-        bannerStrip.style.background = '#2a1b12'; 
+        if (bannerStrip) bannerStrip.style.background = '#2a1b12'; 
     }
 }
 
+function handleHistoryClick(criteria) {
+    const actor = searchHistoryQueue.peek(criteria);
+    const historyResultDiv = document.getElementById('history-result');
+
+    document.querySelectorAll('.hist-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(`btn-hist-${criteria}`).classList.add('active');
+
+    if (!actor) {
+        historyResultDiv.innerHTML = '<div class="history-empty-state" style="text-align:center; color:#8c7b6d; margin: auto;">У черзі порожньо 🕵️‍♂️<br><span style="font-size:0.8rem;">(спробуйте знайти когось)</span></div>';
+        return;
+    }
+
+    historyResultDiv.innerHTML = `
+        <div class="actor-card" style="margin: 0; box-shadow: none; border: none; width: 100%; background: transparent; display: flex; gap: 15px; align-items: flex-start;">
+            ${actor.image 
+                ? `<img src="${actor.image}" alt="${actor.name}" class="actor-image">` 
+                : `<div class="actor-image skeleton-img" style="display:flex; align-items:center; justify-content:center; background:#faf8f5; border: 2px dashed #d1c5b4; color:#a3978a; text-align:center; padding:10px;">Немає фото</div>`
+            }
+            <div class="actor-info" style="flex: 1;">
+                <h3 style="margin: 0 0 8px 0;">${actor.name} <span class="rating-badge ${getBadgeClass(actor.rating)}">🔥 ${actor.rating}</span></h3>
+                <p style="margin: 0 0 8px 0; color: #555; font-size: 0.95rem;">
+                    <strong style="color: #3D1F12;">Ролі:</strong> ${actor.movies.length > 0 ? actor.movies.join(', ') : 'Немає інформації'}
+                </p>
+                <div class="actor-biography"><strong style="color: #3D1F12;">Біографія:</strong> ${actor.biography}</div>
+                <button id="delete-history-btn" style="margin-top: 15px; background-color: #d9534f; color: white; padding: 10px 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s;">
+                    🗑 Вилучити з черги
+                </button>
+            </div>
+        </div>
+    `;
+
+    const delBtn = document.getElementById('delete-history-btn');
+    delBtn.addEventListener('mouseenter', () => delBtn.style.backgroundColor = '#c9302c');
+    delBtn.addEventListener('mouseleave', () => delBtn.style.backgroundColor = '#d9534f');
+
+    delBtn.addEventListener('click', () => {
+        searchHistoryQueue.dequeue(criteria);
+        persistHistory();
+        historyResultDiv.innerHTML = '<div class="history-empty-state" style="color:#2e7d32; text-align:center; margin: auto;">✅ Успішно вилучено!</div>';
+        document.getElementById(`btn-hist-${criteria}`).classList.remove('active');
+    });
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     loadHistoryFromStorage();
     loadFavoritesFromStorage(); 
-    
-
     loadTrendingActorsBanner();
     
     document.getElementById('searchBtn').addEventListener('click', handleSearch);
@@ -368,4 +414,11 @@ document.addEventListener('DOMContentLoaded', () => {
             debouncedSearch();
         }
     });
+
+    if(document.getElementById('btn-hist-highest')) {
+        document.getElementById('btn-hist-highest').addEventListener('click', () => handleHistoryClick('highest'));
+        document.getElementById('btn-hist-lowest').addEventListener('click', () => handleHistoryClick('lowest'));
+        document.getElementById('btn-hist-oldest').addEventListener('click', () => handleHistoryClick('oldest'));
+        document.getElementById('btn-hist-newest').addEventListener('click', () => handleHistoryClick('newest'));
+    }
 });
