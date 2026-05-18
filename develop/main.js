@@ -2,6 +2,9 @@
 
 import { memoize } from '../src/tools/memoize.js';
 import { PriorityQueue } from '../src/tools/priorityQueue.js';
+import { EventEmitter } from '../src/tools/eventEmitter.js';
+
+const emitter = new EventEmitter();
 
 let currentCarouselId = 0; 
 
@@ -64,6 +67,26 @@ const settings = { size: 10, policy: 'lru' };
 const memoizedFetch = memoize(fetchFromAPI, settings);
 
 const offlineQueue = new PriorityQueue();
+
+
+emitter.subscribe('FAVORITES_UPDATED', () => {
+    const favoritesList = document.getElementById('favoritesList');
+    if (favoritesList && favoritesList.style.display !== 'none') {
+        renderFavorites(); 
+    }
+});
+
+emitter.subscribe('MOVIE_ADDED', (title) => {
+    alert(`Фільм "${title}" збережено!`);
+});
+
+emitter.subscribe('OFFLINE_SYNCED', (count) => {
+    alert(`З'єднання відновлено! ${count} фільм(ів) успішно додано до улюблених.`);
+});
+
+const loggerAction = (data) => console.log(`[LOG] Подія спрацювала:`, data);
+emitter.subscribe('MOVIE_ADDED', loggerAction);
+emitter.subscribe('MOVIE_REMOVED', loggerAction);
 
 function saveToFavorites(movieData) {
     let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
