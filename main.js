@@ -3,6 +3,7 @@
 import { fetchActorsStream } from './asyncArray.js';
 import { createMemoizer } from './memoizer.js';
 import { BiDirectionalPriorityQueue } from './priorityQueue.js';
+import { EventEmitter } from './eventEmitter.js';
 
 const API_KEY = 'b37fda521ebe1ba79afa34f9da83cc65'; 
 const BASE_URL = 'https://api.themoviedb.org/3';
@@ -10,6 +11,8 @@ const IMG_URL = 'https://image.tmdb.org/t/p/w200';
 
 const searchHistoryQueue = new BiDirectionalPriorityQueue();
 let currentAbortController = null;
+
+const appEvents = new EventEmitter();
 
 let favoriteActors = [];
 let currentDisplayedActors = []; 
@@ -57,19 +60,20 @@ function persistFavorites() {
 
 window.toggleFavorite = function(actorId) {
     const index = favoriteActors.findIndex(fav => fav.id === actorId);
-    const btn = document.getElementById(`fav-btn-${actorId}`);
+    let actionType = '';
 
     if (index > -1) {
         favoriteActors.splice(index, 1);
-        if (btn) btn.textContent = '🤍';
+        actionType = 'removed';
     } else {
         const actor = currentDisplayedActors.find(a => a.id === actorId);
         if (actor) {
             favoriteActors.push(actor);
-            if (btn) btn.textContent = '❤️';
+            actionType = 'added';
         }
     }
-    persistFavorites();
+    
+    appEvents.emit('favoritesChanged', { actorId, actionType, total: favoriteActors.length });
 };
 
 async function findActorByNameAPI(searchQuery) {
