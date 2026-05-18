@@ -14,7 +14,7 @@ let currentAbortController = null;
 let favoriteActors = [];
 let currentDisplayedActors = []; 
 
-// Допоміжна функція для визначення класу бейджа на основі популярності TMDB
+
 function getBadgeClass(rating) {
     const r = parseFloat(rating);
     if (r >= 20) return 'badge-high';
