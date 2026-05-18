@@ -93,6 +93,9 @@ function saveToFavorites(movieData) {
     if (!favorites.find(fav => fav.id === movieData.id)) {
         favorites.push(movieData);
         localStorage.setItem('favorites', JSON.stringify(favorites));
+
+        emitter.emit('MOVIE_ADDED', movieData.title);
+        emitter.emit('FAVORITES_UPDATED', null);
     }
 }
 
@@ -103,14 +106,18 @@ function syncOfflineActions() {
     while (!offlineQueue.isEmpty()) {
         const action = offlineQueue.dequeue('oldest');
         if (action.type === 'ADD_FAVORITE') {
-            saveToFavorites(action.data);
+            let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+            if (!favorites.find(fav => fav.id === action.data.id)) {
+                favorites.push(action.data);
+                localStorage.setItem('favorites', JSON.stringify(favorites));
+            }
             syncedCount++;
         }
     }
     
     if (syncedCount > 0) {
-        alert(`З'єднання відновлено! ${syncedCount} фільм(ів) успішно додано до улюблених.`);
-        renderFavorites(); 
+        emitter.emit('OFFLINE_SYNCED', syncedCount);
+        emitter.emit('FAVORITES_UPDATED', null);
     }
 }
 
@@ -130,8 +137,6 @@ window.addToFavoritesFromHome = function(event, id, title, posterPath) {
 
     if (navigator.onLine) {
         saveToFavorites(movieData);
-        alert(`Фільм "${title}" збережено!`);
-        renderFavorites();
     } else {
         offlineQueue.enqueue({ type: 'ADD_FAVORITE', data: movieData }, 1);
         alert(`Немає мережі. "${title}" додано до черги і збережеться автоматично.`);
@@ -307,5 +312,7 @@ window.removeFavorite = function(id) {
     let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
     favorites = favorites.filter(movie => movie.id !== id);
     localStorage.setItem('favorites', JSON.stringify(favorites));
-    renderFavorites(); 
+
+    emitter.emit('MOVIE_REMOVED', `Видалено ID: ${id}`);
+    emitter.emit('FAVORITES_UPDATED', null);
 };
