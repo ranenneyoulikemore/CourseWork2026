@@ -393,6 +393,26 @@ document.addEventListener('DOMContentLoaded', () => {
     loadFavoritesFromStorage(); 
     loadTrendingActorsBanner();
     
+    appEvents.subscribe('favoritesChanged', () => persistFavorites());
+
+    appEvents.subscribe('favoritesChanged', (data) => {
+        const btn = document.getElementById(`fav-btn-${data.actorId}`);
+        if (btn) btn.textContent = data.actionType === 'added' ? '❤️' : '🤍';
+    });
+
+    const logListener = (data) => {
+        console.log(`🔔 Актор ${data.actionType}. Всього: ${data.total}`);
+    };
+    
+    const unsubscribeLogger = appEvents.subscribe('favoritesChanged', logListener);
+
+    appEvents.subscribe('favoritesChanged', (data) => {
+        if (data.total >= 3) {
+            unsubscribeLogger(); 
+            console.log("🔕 Відписка від логування успішна (>= 3 акторів).");
+        }
+    });
+
     document.getElementById('searchBtn').addEventListener('click', handleSearch);
     document.getElementById('randomBtn').addEventListener('click', handleRandomActor);
     document.getElementById('streamBtn').addEventListener('click', handleStreamSearch); 
