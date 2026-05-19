@@ -4,6 +4,9 @@ export class AuthProxy {
     constructor() {
         this.strategy = 'none'; 
         this.credentials = {};
+        this.requestCount = 0;
+        this.rateLimitResetTime = Date.now();
+        this.MAX_REQUESTS_PER_MINUTE = 40; 
     }
 
     setStrategy(strategy, credentials) {
@@ -14,6 +17,8 @@ export class AuthProxy {
 
     async fetch(url, options = {}) {
         this._logRequest(url);
+        
+        await this._checkRateLimit();
 
         let { finalUrl, finalOptions } = this._injectCredentials(url, options);
         let response = await fetch(finalUrl, finalOptions);
@@ -32,6 +37,24 @@ export class AuthProxy {
         }
 
         return { finalUrl: newUrl.toString(), finalOptions: newOptions };
+    }
+
+    async _checkRateLimit() {
+        const now = Date.now();
+        if (now - this.rateLimitResetTime > 60000) { 
+            this.requestCount = 0;
+            this.rateLimitResetTime = now;
+        }
+
+        if (this.requestCount >= this.MAX_REQUESTS_PER_MINUTE) {
+            console.warn('[AuthProxy] Перевищено ліміт запитів! Очікування...');
+            const waitTime = 60000 - (now - this.rateLimitResetTime);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+            
+            this.requestCount = 0;
+            this.rateLimitResetTime = Date.now();
+        }
+        this.requestCount++;
     }
 
     _logRequest(url) {
