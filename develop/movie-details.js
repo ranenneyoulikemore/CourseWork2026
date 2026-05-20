@@ -1,8 +1,11 @@
 import { PriorityQueue } from '../src/tools/priorityQueue.js';
+import { apiProxy } from '../src/tools/authProxy.js';
 
 const API_KEY = 'b37fda521ebe1ba79afa34f9da83cc65';
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMG_URL = 'https://image.tmdb.org/t/p/w500';
+
+apiProxy.setStrategy('apiKey', { apiKey: API_KEY });
 
 const offlineQueue = new PriorityQueue();
 
@@ -36,7 +39,7 @@ async function getMovieDetails() {
     }
 
     try {
-        const response = await fetch(`${BASE_URL}/movie/${movieId}?api_key=${API_KEY}&language=uk-UA`);
+        const response = await apiProxy.fetch(`${BASE_URL}/movie/${movieId}?language=uk-UA`);
         const movie = await response.json();
 
         const posterPath = movie.poster_path ? IMG_URL + movie.poster_path : 'https://via.placeholder.com/500x750?text=Немає+постера';

@@ -3,6 +3,7 @@
 import { memoize } from '../src/tools/memoize.js';
 import { PriorityQueue } from '../src/tools/priorityQueue.js';
 import { EventEmitter } from '../src/tools/eventEmitter.js';
+import { apiProxy } from '../src/tools/authProxy.js';
 
 const emitter = new EventEmitter();
 
@@ -51,15 +52,17 @@ const API_KEY = 'b37fda521ebe1ba79afa34f9da83cc65';
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMG_URL = 'https://image.tmdb.org/t/p/w500';
 
-const DISCOVER_URL = `${BASE_URL}/discover/movie?api_key=${API_KEY}&language=uk-UA&region=UA&sort_by=popularity.desc&without_original_language=ru`;
-const SEARCH_URL = `${BASE_URL}/search/movie?api_key=${API_KEY}&language=uk-UA&region=UA`;
+apiProxy.setStrategy('apiKey', { apiKey: API_KEY });
+
+const DISCOVER_URL = `${BASE_URL}/discover/movie?language=uk-UA&region=UA&sort_by=popularity.desc&without_original_language=ru`;
+const SEARCH_URL = `${BASE_URL}/search/movie?language=uk-UA&region=UA`;
 
 const searchInput = document.getElementById('searchInput');
 const genreSelect = document.getElementById('genreSelect');
 const moviesContainer = document.getElementById('moviesContainer');
 
 async function fetchFromAPI(url) {
-    const response = await fetch(url);
+    const response = await apiProxy.fetch(url);
     return await response.json();
 }
 
