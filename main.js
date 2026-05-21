@@ -4,10 +4,14 @@ import { fetchActorsStream } from './asyncArray.js';
 import { createMemoizer } from './memoizer.js';
 import { BiDirectionalPriorityQueue } from './priorityQueue.js';
 import { EventEmitter } from './eventEmitter.js';
+import { ApiAuthProxy, TMDBAuthStrategy } from './authProxy.js';
 
 const API_KEY = 'b37fda521ebe1ba79afa34f9da83cc65'; 
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMG_URL = 'https://image.tmdb.org/t/p/w200';
+
+const tmdbStrategy = new TMDBAuthStrategy(API_KEY);
+const apiProxy = new ApiAuthProxy(tmdbStrategy);
 
 const searchHistoryQueue = new BiDirectionalPriorityQueue();
 let currentAbortController = null;
@@ -16,7 +20,6 @@ const appEvents = new EventEmitter();
 
 let favoriteActors = [];
 let currentDisplayedActors = []; 
-
 
 function getBadgeClass(rating) {
     const r = parseFloat(rating);
@@ -78,17 +81,17 @@ window.toggleFavorite = function(actorId) {
 
 async function findActorByNameAPI(searchQuery) {
     console.log(`[API Пошук в TMDB]: "${searchQuery}"`);
-    const url = `${BASE_URL}/search/person?api_key=${API_KEY}&query=${encodeURIComponent(searchQuery)}&language=uk-UA`;
+    const url = `${BASE_URL}/search/person?query=${encodeURIComponent(searchQuery)}&language=uk-UA`;
     
-    const response = await fetch(url);
+    const response = await apiProxy.fetch(url);
     if (!response.ok) throw new Error('Помилка мережі при зверненні до TMDB');
     
     const data = await response.json();
     const topActors = data.results.slice(0, 5);
     
     const detailedActors = await Promise.all(topActors.map(async (actor) => {
-        const detailUrl = `${BASE_URL}/person/${actor.id}?api_key=${API_KEY}&language=uk-UA`;
-        const detailRes = await fetch(detailUrl);
+        const detailUrl = `${BASE_URL}/person/${actor.id}?language=uk-UA`;
+        const detailRes = await apiProxy.fetch(detailUrl);
         const detailData = detailRes.ok ? await detailRes.json() : {};
 
         return {
@@ -232,15 +235,15 @@ async function handleRandomActor() {
         currentAbortController = new AbortController();
 
         const randomPage = Math.floor(Math.random() * 50) + 1;
-        const url = `${BASE_URL}/person/popular?api_key=${API_KEY}&language=uk-UA&page=${randomPage}`;
+        const url = `${BASE_URL}/person/popular?language=uk-UA&page=${randomPage}`;
         
-        const response = await fetch(url, { signal: currentAbortController.signal });
+        const response = await apiProxy.fetch(url, { signal: currentAbortController.signal });
         const data = await response.json();
         
         const randomActorRaw = data.results[Math.floor(Math.random() * data.results.length)];
         
-        const detailUrl = `${BASE_URL}/person/${randomActorRaw.id}?api_key=${API_KEY}&language=uk-UA`;
-        const detailRes = await fetch(detailUrl, { signal: currentAbortController.signal });
+        const detailUrl = `${BASE_URL}/person/${randomActorRaw.id}?language=uk-UA`;
+        const detailRes = await apiProxy.fetch(detailUrl, { signal: currentAbortController.signal });
         const detailData = detailRes.ok ? await detailRes.json() : {};
         
         const randomActor = {
@@ -322,10 +325,10 @@ function debounce(func, delay) {
 
 async function loadTrendingActorsBanner() {
     const bannerStrip = document.getElementById('actors-banner-strip');
-    const url = `${BASE_URL}/person/popular?api_key=${API_KEY}&language=uk-UA&page=1`;
+    const url = `${BASE_URL}/person/popular?language=uk-UA&page=1`;
 
     try {
-        const response = await fetch(url);
+        const response = await apiProxy.fetch(url);
         if (!response.ok) throw new Error('Помилка завантаження трендів');
         
         const data = await response.json();
