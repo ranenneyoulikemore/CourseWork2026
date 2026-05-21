@@ -1,30 +1,35 @@
 'use strict';
 
-export function log() {
+export function log({ level = 'INFO' } = {}) {
     return function (fn) {
         return function (...args) {
+            const start = performance.now();
             const fnName = fn.name || 'anonymous';
-            console.log(`[LOG] Виклик ${fnName} з аргументами:`, args);
+
+            const handleLog = (result, error) => {
+                const time = performance.now() - start;
+                const timestamp = new Date().toISOString();
+
+                if (level === 'ERROR' && !error) return;
+
+                if (error) {
+                    console.error(`[${timestamp}] [${level}] ${fnName}(${JSON.stringify(args)}) - ERROR: ${error.message} (${time.toFixed(2)}ms)`);
+                } else {
+                    console.log(`[${timestamp}] [${level}] ${fnName}(${JSON.stringify(args)}) - Result: ${JSON.stringify(result)} (${time.toFixed(2)}ms)`);
+                }
+            };
 
             try {
                 const result = fn.apply(this, args);
-                
                 if (result instanceof Promise) {
                     return result
-                        .then(res => {
-                            console.log(`[LOG] Результат ${fnName}:`, res);
-                            return res;
-                        })
-                        .catch(err => {
-                            console.error(`[LOG] Помилка в ${fnName}:`, err);
-                            throw err;
-                        });
+                        .then(res => { handleLog(res, null); return res; })
+                        .catch(err => { handleLog(null, err); throw err; });
                 }
-                
-                console.log(`[LOG] Результат ${fnName}:`, result);
+                handleLog(result, null);
                 return result;
             } catch (error) {
-                console.error(`[LOG] Помилка в ${fnName}:`, error);
+                handleLog(null, error);
                 throw error;
             }
         };
