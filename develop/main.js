@@ -4,6 +4,7 @@ import { memoize } from '../src/tools/memoize.js';
 import { PriorityQueue } from '../src/tools/priorityQueue.js';
 import { EventEmitter } from '../src/tools/eventEmitter.js';
 import { apiProxy } from '../src/tools/authProxy.js';
+import { log, formatters } from '../src/tools/logger.js';
 
 const emitter = new EventEmitter();
 
@@ -61,10 +62,12 @@ const searchInput = document.getElementById('searchInput');
 const genreSelect = document.getElementById('genreSelect');
 const moviesContainer = document.getElementById('moviesContainer');
 
-async function fetchFromAPI(url) {
-    const response = await apiProxy.fetch(url);
-    return await response.json();
-}
+const fetchFromAPI = log({ level: 'DEBUG', formatter: formatters.json })(
+    async function fetchFromAPI(url) {
+        const response = await apiProxy.fetch(url);
+        return await response.json();
+    }
+);
 
 const settings = { size: 10, policy: 'lru' };
 const memoizedFetch = memoize(fetchFromAPI, settings);
@@ -91,16 +94,18 @@ const loggerAction = (data) => console.log(`[LOG] Подія спрацювал�
 emitter.subscribe('MOVIE_ADDED', loggerAction);
 emitter.subscribe('MOVIE_REMOVED', loggerAction);
 
-function saveToFavorites(movieData) {
-    let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
-    if (!favorites.find(fav => fav.id === movieData.id)) {
-        favorites.push(movieData);
-        localStorage.setItem('favorites', JSON.stringify(favorites));
+const saveToFavorites = log({ level: 'INFO' })(
+    function saveToFavorites(movieData) {
+        let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+        if (!favorites.find(fav => fav.id === movieData.id)) {
+            favorites.push(movieData);
+            localStorage.setItem('favorites', JSON.stringify(favorites));
 
-        emitter.emit('MOVIE_ADDED', movieData.title);
-        emitter.emit('FAVORITES_UPDATED', null);
+            emitter.emit('MOVIE_ADDED', movieData.title);
+            emitter.emit('FAVORITES_UPDATED', null);
+        }
     }
-}
+);
 
 function syncOfflineActions() {
     if (!navigator.onLine) return;
@@ -263,19 +268,19 @@ if (loadMoreBtn) {
     loadMoreBtn.addEventListener('click', () => consumeNextBatch(false));
 }
 
-async function getMovies(url) {
-    try {
-        const cleanUrl = url.replace(/&page=\d+/, '');
-        
-        currentMovieStream = createMovieStream(cleanUrl);
-        
-        await consumeNextBatch(true);
-        
-        if (loadMoreBtn) loadMoreBtn.style.display = 'block';
-    } catch (error) {
-        console.error("Помилка API:", error);
+const getMovies = log({ level: 'ERROR' })(
+    async function getMovies(url) {
+        try {
+            const cleanUrl = url.replace(/&page=\d+/, '');
+            currentMovieStream = createMovieStream(cleanUrl);
+            await consumeNextBatch(true);
+            if (loadMoreBtn) loadMoreBtn.style.display = 'block';
+        } catch (error) {
+            console.error("Помилка API:", error);
+            throw error; 
+        }
     }
-}
+);
 
 getMovies(`${DISCOVER_URL}&page=1`);
 
