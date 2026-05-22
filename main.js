@@ -5,6 +5,7 @@ import { createMemoizer } from './memoizer.js';
 import { BiDirectionalPriorityQueue } from './priorityQueue.js';
 import { EventEmitter } from './eventEmitter.js';
 import { ApiAuthProxy, TMDBAuthStrategy } from './authProxy.js';
+import { withLogging } from './logger.js';
 
 const API_KEY = 'b37fda521ebe1ba79afa34f9da83cc65'; 
 const BASE_URL = 'https://api.themoviedb.org/3';
@@ -57,9 +58,9 @@ function loadFavoritesFromStorage() {
     }
 }
 
-function persistFavorites() {
+const persistFavorites = withLogging({ level: 'ERROR', format: 'json' })(function persistFavorites() {
     localStorage.setItem('favoriteActors', JSON.stringify(favoriteActors));
-}
+});
 
 window.toggleFavorite = function(actorId) {
     const index = favoriteActors.findIndex(fav => fav.id === actorId);
@@ -79,8 +80,7 @@ window.toggleFavorite = function(actorId) {
     appEvents.emit('favoritesChanged', { actorId, actionType, total: favoriteActors.length });
 };
 
-async function findActorByNameAPI(searchQuery) {
-    console.log(`[API Пошук в TMDB]: "${searchQuery}"`);
+const findActorByNameAPI = withLogging({ level: 'INFO', format: 'text' })(async function findActorByNameAPI(searchQuery) {
     const url = `${BASE_URL}/search/person?query=${encodeURIComponent(searchQuery)}&language=uk-UA`;
     
     const response = await apiProxy.fetch(url);
@@ -105,7 +105,7 @@ async function findActorByNameAPI(searchQuery) {
     }));
 
     return detailedActors;
-}
+});
 
 const smartSearch = createMemoizer(findActorByNameAPI, { maxSize: 5, strategy: 'LRU' });
 
