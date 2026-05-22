@@ -1,6 +1,27 @@
 'use strict';
 
-export function log({ level = 'INFO' } = {}) {
+export const formatters = {
+    default: (level, name, args, result, error, time) => {
+        const timestamp = new Date().toISOString();
+        if (error) {
+            return `[${timestamp}] [${level}] ${name}(${JSON.stringify(args)}) - ERROR: ${error.message} (${time.toFixed(2)}ms)`;
+        }
+        return `[${timestamp}] [${level}] ${name}(${JSON.stringify(args)}) - Result: ${JSON.stringify(result)} (${time.toFixed(2)}ms)`;
+    },
+    json: (level, name, args, result, error, time) => {
+        return JSON.stringify({
+            timestamp: new Date().toISOString(),
+            level,
+            function: name,
+            arguments: args,
+            result: result || null,
+            error: error ? error.message : null,
+            executionTimeMs: Number(time.toFixed(2))
+        });
+    }
+};
+
+export function log({ level = 'INFO', formatter = formatters.default, output = console.log } = {}) {
     return function (fn) {
         return function (...args) {
             const start = performance.now();
@@ -8,14 +29,15 @@ export function log({ level = 'INFO' } = {}) {
 
             const handleLog = (result, error) => {
                 const time = performance.now() - start;
-                const timestamp = new Date().toISOString();
 
                 if (level === 'ERROR' && !error) return;
 
-                if (error) {
-                    console.error(`[${timestamp}] [${level}] ${fnName}(${JSON.stringify(args)}) - ERROR: ${error.message} (${time.toFixed(2)}ms)`);
+                const logMessage = formatter(level, fnName, args, result, error, time);
+                
+                if (error && output === console.log) {
+                    console.error(logMessage);
                 } else {
-                    console.log(`[${timestamp}] [${level}] ${fnName}(${JSON.stringify(args)}) - Result: ${JSON.stringify(result)} (${time.toFixed(2)}ms)`);
+                    output(logMessage);
                 }
             };
 
